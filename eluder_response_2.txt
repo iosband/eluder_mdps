@@ -1,0 +1,22 @@
+Thank you very much for your feedback, we will try to deal with the main points in review.
+
+1. Paper clarity
+**************************************
+The main feedback seems to be that the paper is not easy to follow. After some time away from writing the paper we agree with the reviewers that we did not succeed in making the paper as clear or accessible as we would have liked. We intend to seriously refactor the paper to make the message and intuition more clear and move some of the more technical or tedious analysis to the appendix.
+
+2. Simulation
+**************************************
+We considered adding simulation results for our algorithms, but did not include them for two reasons. First, we found that in classic linear quadratic control it was very hard to get any learning algorithm that would outperform a simple certain equaivalent policy (for which there are no guarantees). Second, in this theoretical paper with tight page constraints we thought that it might further clutter the message. However, we do agree that some simulation results might be a nice addition to the paper which we should revisit and potentially include as part of our final revision.
+
+3. Paper novelty
+**************************************
+The reviewers correctly point out that the main results of this paper follow as a generalization of the results in [8] and [16]. The novel contribution of this paper is to generalize the theory of Eluder dimension [16] from real-valued functions to vector-valued functions. This allows us to replace the regret analysis of [8] with the dimensionality rather than the cardinality of the state and action spaces. We will try to make this separation more clear.
+
+4. Dimensionality/Assumptions
+**************************************
+We disagree with one reviewer's comments that our regret bounds are not technically true and do believe that the results shown for PSRL hold given our assumptions. However, we agree that these are valid misunderstandings caused by the paper's current lack of clarity, which we intend to address. For ease of reference we discuss these here in bullet points:
+- We do not require that the value function is Lipschitz, but instead that the one-step-ahead future value function is Lipschitz. This is a strictly weaker assumption which, due to system noise, will often be satisfied even where the value function is discontinuous.
+- Perhaps the single main point of the paper is to avoid the curse of dimensionality of discretization in MDPs. Our main result establishes a regret bound in terms of the Eluder dimension, and section 4.1 shows that for several well-studied domains this does not grow exponentially with dimension. We should make this more clear.
+-  In section 2 we assume that the initial state resets according to some distribution \rho at the start of every episode as the reviewer suggests. 
+- Our main result is a bound on the expected (Bayesian) regret given that the underlying MDP is distributed according to the prior.
+- We do assume that it is possible for the agent to sample from their posterior beliefs and so do not address the valid concerns about when this is not possible.

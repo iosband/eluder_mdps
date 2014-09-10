@@ -1,0 +1,851 @@
+\documentclass{article}
+
+%---------------------------------------------------------------------------------------------------------------------------------------------
+% Including Packages
+\usepackage{nips14submit_e,times}
+\usepackage{color}
+\usepackage{algorithm, algpseudocode}
+\usepackage{ mathrsfs }
+\usepackage{ dsfont }
+\usepackage{lmodern}
+\usepackage{array}
+\usepackage{bbm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[mathscr]{eucal}
+\usepackage{graphicx}
+\usepackage{mathrsfs}
+\usepackage{psfrag}
+\usepackage{color}
+\usepackage{here}
+%\usepackage[margin=1in]{geometry}
+\usepackage{wasysym}
+%\usepackage[T1]{fontenc}
+%\usepackage[charter]{mathdesign}
+%\usepackage{eulervm}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsthm}
+%\usepackage{ntheorem}
+\usepackage{lipsum}
+%\setlength{\parskip}{2pt}%
+%\setlength{\parindent}{12pt}%
+
+
+%\theoremstyle{break}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\newtheorem{lemma2}{Lemma}
+\newtheorem{mydef}{Definition}
+\newtheorem{prop}{Proposition}
+\newtheorem{claim}{Claim}
+\newtheorem{assumption}{Assumption}
+%---------------------------------------------------------------------------------------------------------------------------------------------
+% Setting up macro shortcuts
+\newcommand{\Exp}{\mathds{E}}
+\newcommand{\Expk}{\mathds{E}_{k}}
+\newcommand{\Prob}{\mathds{P}}
+\newcommand{\Real}{\mathds{R}}
+\newcommand{\Nat}{\mathbb{N}}
+\newcommand{\Ind}{\mathds{1}}
+
+\newcommand{\Xc}{\mathcal{X}}
+\newcommand{\Yc}{\mathcal{Y}}
+\newcommand{\Zc}{\mathcal{Z}}
+\newcommand{\Pc}{\mathcal{P}}
+\newcommand{\Qc}{\mathcal{Q}}
+\newcommand{\Fc}{\mathcal{F}}
+\newcommand{\Gc}{\mathcal{G}}
+\newcommand{\Rc}{\mathcal{R}}
+\newcommand{\Sc}{\mathcal{S}}
+\newcommand{\Ac}{\mathcal{A}}
+\newcommand{\Mc}{\mathcal{M}}
+\newcommand{\Tc}{\mathcal{T}}
+\newcommand{\Dep}{ \Delta^H,\Delta^F,\mathcal{F},\epsilon }
+
+\newcommand{\conf}{\mathcal{F}^d_t}
+
+\newcommand{\vect}[1]{\boldsymbol{#1}}
+\newcommand{\opt}{M^*}
+\newcommand{\sampled}{{M_k}}
+\newcommand{\Pstar}{P^{*}(\cdot \mid s_t, a_t)} 
+\newcommand{\Pk}{P_{k}(\cdot \mid s_t, a_t)}
+\newcommand{\Pdiff}{(P_{k}-P^{*})(\cdot \mid s_t, a_t)}
+\newcommand{\Rdiff}{(r_k-r^{*})(s_t, a_t)}
+\newcommand{\optPol}{\mu^{*}}
+\newcommand{\sampledPol}{\mu_{k}}
+\newcommand{\bellmanSampled}{\mathcal{T}_{\mu_{k}(\cdot,i)}^{k}}
+\newcommand{\bellmanTrue}{\mathcal{T}_{\mu_{k}(\cdot,i)}^{*}}
+\newcommand{\bellmanSampledA}{\mathcal{T}_{\mu_{k}(\cdot,1)}^{k}}
+\newcommand{\bellmanTrueA}{\mathcal{T}_{\mu_{k}(\cdot,1)}^{*}}
+\newcommand{\vSampled}{V_{\mu_k, 1}^{k}}
+\newcommand{\vSampledi}{V_{\mu_k, i}^{k}}
+\newcommand{\vTrue}{V_{\tau, \mu_k}^{*}}
+
+%--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+% \title{Posterior Sampling for Reinforcement Learning and the Eluder Dimension}
+\title{Model-based Reinforcement Learning \\ and the Eluder Dimension}
+\author{Ian Osband, Benjamin Van Roy \\ \\ Stanford University}
+
+\begin{document}
+\maketitle
+
+
+%--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\begin{abstract}
+We consider the problem of learning to optimize an unknown Markov decision process (MDP).
+We show that, if the MDP can be parameterized within some known function class, we can obtain regret bounds that scale with the dimensionality, rather than cardinality, of the system.
+We characterize this dependence explicitly as $\tilde{O}(\sqrt{d_K d_E T})$ where $T$ is time elapsed, $d_K$ is the Kolmogorov dimension and $d_E$ is the \emph{eluder dimension}.
+This represents the first unified framework for model-based reinforcement learning and provides state of the art guarantees in several important settings.
+Moreover, we present a simple and computationally efficient algorithm \emph{posterior sampling for reinforcement learning} (PSRL) that satisfies these bounds.
+
+\end{abstract}
+
+
+%--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\section{Introduction}
+
+% \begin{itemize}
+% 	\item Reinforcement learning problem on MDPs.
+% 	\item Lots of settings have large or even infinite state spaces.
+% 	\item Some people have done work showing you can do stuff in certain cases.
+% 	\item Regret bounds are good, they imply PAC bounds and make sense for online implementations
+% 	\item Some people have done regret bounds of various kinds
+% 	\item Eluder dimension in bandits gives a general framework for MAB.
+% 	\item We extend this to reinforcement learning in quite a general setting.
+% \end{itemize}
+
+We consider an agent that interacts with an uncertain environment while trying to maximize its cumulative rewards through time \cite{burnetas1997optimal}.
+We model this environment as a Markov decision process (MDP) where the agent is unsure of the true reward and transition but does know that they lie within some functional families $\Rc$ and $\Pc$.
+Efficient reinforcement learning seeks algorithms which balance exploration with exploitation, so that the agent's performance is guaranteed to be close to the unknown optimal control in some sense \cite{lai1985asymptotically,kaelbling1996reinforcement}.
+
+The main focus in this literature has been to develop algorithms for the \emph{tabula rasa} setting, where little prior knowledge of the environment is assumed beyond the state and action spaces.
+Broadly these algorithms can be separated as either model-based, which build a generative model of the environment, or model-free which do not.
+Algorithms of both type have been developed to provide PAC-MDP bounds polynomial in the number of states $S$ and actions $A$ \cite{kearns2002near,brafman2003r,strehl2006pac}.
+However, model-free approaches often struggle to plan efficient exploration so that currently the most efficient regret bounds are given by model-based approaches.
+The strongest results establish algorithms with bounds on the cumulative regret at time $T$, $\tilde{O}(S\sqrt{AT})$ close to the lower bound $\Omega(\sqrt{SAT})$ \cite{jaksch2010near,osband2013more}.
+
+The problem with this \emph{tabula rasa} setting is that MDP complexity grows with cardinality of the underlying state and action spaces; in many settings of interest this may be extremely large, or even infinite.
+The standard approach to this problem is some discretization scheme with degradation to performance though imprecision, but this falls victim to the curse of dimensionality.
+To achieve efficiency results that can exploit MDP structure, the existing literature usually presents algorithms tailored to some specific families of $\Rc$ and $\Pc$.
+
+The most widely-studied parameterization is the degenerate MDP with no transitions, the mutli-armed bandit \cite{auer2003using,bubeck2011xarmed,russo2013}.
+Another common assumption is that the transition function is linear in states and actions.
+Papers here have established sample complexity \cite{strehl2007online} and even regret bounds $\tilde{O}(\sqrt{T})$ for linear quadratic control \cite{abbasi2011improved}, but with constants that grow exponentially with dimension.
+Later works remove this exponential dependence, but only under significant sparsity assumptions \cite{ibrahimi2012efficient}.
+The most general previous analysis considers rewards and transitions that are $\alpha$-H\"{o}lder in a $d$-dimensional space to establish regret bounds $\tilde{O}(T^{(2d+\alpha)/(2d+2\alpha)})$ \cite{ortner2012online}.
+However, the proposed algorithm UCCRL is not computationally tractable and the bounds approach linearity in many settings.
+
+We present the first regret bounds for learning in a general MDP with rewards in $\Rc$ and transitions in $\Pc$ in terms of the dimensionality, rather than the cardinality, of the MDP.
+To characterize the complexity of this learning problem we extend the definition of the eluder dimension, previously introduced for bandits, to capture the interedependence between state-action pairs \cite{russo2013eluder}.
+Our results provide a unified framework for the analysis of model-based reinforcement learning and provide new state of the art bounds in several important problem settings.
+What is more, these bounds are satisfied by one simple and intuitive algorithm \emph{posterior sampling for reinforcement learning} (PSRL) \cite{thompson1933,strens2000bayesian,osband2013more} across all problem settings.
+PSRL can naturally encode complex problem knowledge with computational complexity generally no greater than solving a single known MDP.
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\section{Problem formulation}
+
+We consider the problem of learning to optimize a random finite horizon MDP $M = (\Sc, \Ac, R^M, P^M, \tau, \rho)$ in repeated finite episodes of interaction.
+$\Sc$ is the state space, $\Ac$ is the action space, $R^M(s,a)$ is the reward distribution over $\Real$ and $P^M(\cdot|s,a)$ is the transition distribution over $\Sc$ when selecting action $a$ in state $s$, $\tau$ is the time horizon, and $\rho$ the initial state distribution.
+We define the MDP and all other random variables we will consider with respect to a probability space $(\Omega, \mathscr{F}, \mathbb{P})$.
+
+For our unified analysis we will require that the state space $\Sc$ is represented as some $L^2$ space.
+In any MDP with states in $\Real^n$ this is completely natural.
+For discrete MDPs over $\{1,..,S\}$, we will consider states $s_t \in \Sc := [0,1]^S$.
+In this case, the traditional transition function is now given by the \emph{expectation} of our transition distribution $\overline{p}^M(s,a) := \Exp \left[s' | s' \sim P^M(\cdot|s,a)\right]$.
+
+A policy $\mu$ is a function mapping each state $s \in \Sc$ and $i = 1,\ldots,\tau$ to an action $a \in \Ac$.
+For each MDP $M$ and policy $\mu$, we define a value function $V$:
+\begin{equation}
+\label{eq: value fn}
+V^{M}_{\mu, i}(s) := \Exp_{M,\mu}\left[ \sum_{j=i}^{\tau} \overline{r}^M(s_j,a_j) \Big| s_i = s \right]
+\end{equation}
+where $\overline{r}^M(s,a) := \Exp[r | r \sim R^M(s,a)]$ and the subscripts of the expectation operator indicate that $a_j = \mu(s_j, j)$, and $s_{j+1} \sim P^M(\cdot| s_j, a_j)$ for $j = i, \ldots, \tau$.  A policy $\mu$ is said to be optimal for MDP $M$ if $V^{M}_{\mu, i}(s) = \max_{\mu'} V^{M}_{\mu', i}(s)$ for all $s \in \Sc$ and $i=1,\ldots,\tau$. We will associate with each MDP $M$ a policy $\mu^M$ that is optimal for $M$.
+
+% We will also introduce the concept of a future value function $U$, which is the expected value of the optimal policy following a single transition according to $Q$,
+We also define the future value function $U$ to be the expected value of the optimal policy following a single transition according to a distribution $Q$,
+\begin{equation}
+\label{eq: future value}
+U^M_{i}(Q) := \Exp_{M,\mu^M}\left[ V^M_{\mu^M,i+1}(s) \big| s \sim Q \right].
+\end{equation}
+In most settings of interest, similar transition distributions $Q,\tilde{Q}$ will have similar future values.
+We formalize this idea through the notion of Lipschitz continuity in the norm of expectation $\| \Exp[\cdot] \|_2$ over transition distributions such that for all $Q,\tilde{Q} \in \Pc$:
+\begin{equation}
+\label{eq: future Lipschitz}
+\| U^M_i(Q) - U^M_i(\tilde{Q}) \|_2 \le K^M_i(\Pc) \| \Exp[ Q - \tilde{Q}] \|_2.
+\end{equation}
+We define $K^M := \max_{i} K^M_i(\Pc)$ to be a global Lipschitz contant for the future value function.
+
+The reinforcement learning agent interacts with the MDP over episodes that begin at times $t_k = (k-1) \tau + 1$, $k=1,2,\ldots$.
+At each time $t$, the agent selects an action $a_t$, observes a scalar reward $r_t$, and then transitions to $s_{t+1}$.
+If an agent follows a policy $\mu$ then when in state $s$ at time $t$ during episode $k$, it selects an action $a_t=\mu(s, t - t_k)$.
+Let $H_t = (s_1,a_1,r_1,\ldots,s_{t-1},a_{t-1},r_{t-1})$ denote the history of observations made \emph{prior} to time $t$.  
+A reinforcement learning algorithm is a deterministic sequence $\{\pi_k | k = 1, 2, \ldots\}$ of functions, each mapping $H_{t_k}$ to a probability distribution $\pi_{k}(H_{t_k})$ over policies which the agent will employ during the $k$th episode.
+We define the regret incurred by a reinforcement learning algorithm $\pi$ up to time $T$ to be
+$$\text{Regret}(T, \pi, M^*) := \sum_{k=1}^{\lceil T/\tau \rceil} \Delta_k,$$
+where $\Delta_k$ denotes regret over the $k$th episode, defined with respect to the MDP $M^*$ by
+$$\Delta_k := \int_{s \in \Sc} \rho(s) \left(V^{M^*}_{\mu^*, 1} - V^{M^{*}}_{\mu_k, 1}\right)(s) $$
+with $\mu^* = \mu^{M^*}$ and $\mu_{k}\sim \pi_{k}(H_{t_k})$. Note that regret is not deterministic since it can depend on the random MDP $M^*$, the algorithm's internal random sampling and, through the history $H_{t_k}$, on previous random transitions and random rewards. We will assess and compare algorithm performance in terms of regret and its expectation.
+
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\section{Main results}
+We now introduce the algorithm posterior sampling for reinforcement learning (PSRL) first proposed by Strens \cite{strens2000bayesian} and later was shown to satisfy efficient regret bounds in finite MDPs \cite{osband2013more}.
+The algorithm begins with a prior distribution over MDPs with rewards in $\Rc$ and transitions in $\Pc$, at the start of the $k$th episode, PSRL samples and MDP $M_k$ from the posterior\footnote{Without conjugate priors this can be acheived by algorithms such as Metropolis-Hastings.}.
+PSRL then follows the policy $\mu_k = \mu^{M_k}$ which is optimal for this \emph{sampled} MDP during episode $k$.
+This algorithm is a natural adaptation of Thompson sampling \cite{thompson1933}, one of the oldest and most effective algorithms for multi-armed bandits, to reinforcement learning.
+
+\begin{algorithm}[H]
+\caption{\protect\\ Posterior Sampling for Reinforcement Learning (PSRL)}
+\label{alg: PS}
+
+\begin{algorithmic}[1]
+    \State \textbf{Input: }Prior distribution $\phi$ for $M^*$, t=1
+    \For{episodes $k=1,2,..$}
+    \State{sample $M_k \sim \phi(\cdot | H_t)$}
+    \State{compute $\mu_k = \mu^{M_k}$}
+	    \For{timesteps $j=1,..,\tau$} 
+	        \State{apply $a_t \sim \mu_k(s_t,j)$}
+	        \State{observe $r_t$ and $s_{t+1}$}
+	        \State{advance $t=t+1$}
+	    \EndFor
+	\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+To state our results we first introduce some notation.
+For any set $\Xc$ and $L^2$ space $(\Yc,\|\cdot\|_2)$ let $\Pc^{C,\sigma}_{\Xc,\Yc}$ be the family the distributions from $\Xc$ to $\Yc$ with mean norm bounded in $[0,C]$ and additive $\sigma$-sub-Gaussian noise.
+For the family $\Fc$ let $N(\Fc,\alpha,\|\cdot\|_2)$ be the $\alpha$-covering number of $\Fc$ with respect to the $\|\cdot\|_2$-norm and write $n_\Fc = \log(8 N(\Fc,1/T^2,\|\cdot\|_2)T)$ for brevity.
+Finally we  write $d_\Fc = {\rm dim}_E(\Fc,T^{-1})$ for the eluder dimension of $\Fc$ at precision $T^{-1}$, a notion of dimension specialized to sequential measurements described in Section \ref{sec: eluder}.
+
+Our main result, Theorem \ref{thm: main regret}, bounds the expected regret of PSRL at any time $T$.
+\begin{theorem}[Expected regret for PSRL in parameterized MDPs]
+\label{thm: main regret} \hspace{0.00000000000001mm} \newline
+Let $M^*$ be an MDP with state space $\Sc$, action space $\Ac$, rewards $R^* \in \Rc \subseteq \Pc^{C_\Rc,\sigma_\Rc}_{\Sc \times \Ac,\Real}$ and transitions $P^* \in \Pc \subseteq \Pc^{C_\Pc,\sigma_\Pc}_{\Sc \times \Ac,\Sc}$ for any $C_\Rc, C_\Pc, \sigma_\Rc, \sigma_\Pc >0 $.
+If $\phi$ is the distribution of $M^*$ and $K^*$ is a global Lipschitz constant for the future value function then:
+\begin{eqnarray}
+\label{eq: reg proof}
+	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le
+	\bigg[ C_\Rc + C_\Pc \bigg] + 
+	\bigg[ 1 + \tau C_\Rc d_\Rc + 8\sqrt{d_\Rc(4C_\Rc + \sqrt{2\sigma_\Rc^2 \log(32T^3)})}
+	+ 8\sqrt{2 \sigma_\Rc^2 n_\Rc d_\Rc T} \bigg] \nonumber \\
+	& \hspace{-155mm} + \Exp[K^*]\left(1+\frac{1}{T-1}\right)\left( 1 + \tau C_\Pc d_\Pc + 8\sqrt{d_\Pc(4C_\Pc + \sqrt{2\sigma_\Pc^2 \log(32T^3)})}
+	+ 8\sqrt{2 \sigma_\Pc^2 n_\Pc d_\Pc T} \right)
+\end{eqnarray}
+\end{theorem}
+
+To clarify the assymptotic dependence of this bound we will make use of another classic measure of dimensionality, the Kolmogorov dimension of a function class $\Fc$, ${\rm dim}_K(\Fc)$.
+Using this definition \ref{def: kol} in Theorem \ref{thm: main regret} we can obtain our Corollary.
+
+\begin{corollary}[Assymptotic regret bounds for PSRL in parameterized MDPs]
+\label{cor: ass regret} \hspace{0.00000000000001mm} \newline
+Let $M^*$ be an MDP with state space $\Sc$, action space $\Ac$, rewards $R^* \in \Rc \subseteq \Pc^{C_\Rc,\sigma_\Rc}_{\Sc \times \Ac,\Real}$ and transitions $P^* \in \Pc \subseteq \Pc^{C_\Pc,\sigma_\Pc}_{\Sc \times \Ac,\Sc}$ for any $C_\Rc, C_\Pc, \sigma_\Rc, \sigma_\Pc >0 $.
+If $\phi$ is the distribution of $M^*$ and $K^*$ is a global Lipschitz constant for the future value function then:
+\begin{equation}
+	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] = \tilde{O} \left( \ \sigma_\Rc \sqrt{{\rm dim}_K(\Rc) {\rm dim}_E(\Rc,T^{-1}) T} 
+		+ \Exp[K^*] \sigma_\Pc \sqrt{{\rm dim}_K(\Pc) {\rm dim}_E(\Pc,T^{-1}) T} \ \right)
+\end{equation}
+Where $\tilde{O}(\cdot)$ ignores terms logarithmic in $T$.
+\end{corollary}
+
+Using the bounds on eluder dimension given in Section \ref{sec: eluder} we can provide concrete regret bounds in a number of canonical domains such as discrete MDPs, linear-quadratic control and even generalized linear systems.
+In all of these cases the eluder dimension scales comparably with more traditional notions of dimensionality.
+For clarity, we present bounds in the case of linear-quadratic control.
+\begin{corollary}[Assymptotic regret bounds for PSRL in linear quadratic systems]
+\label{cor: LQR} \hspace{0.00000000000001mm} \newline
+Let $M^*$ be a linear-quadratic system with $n-dimensional$ states and actions $\|\cdot\|_2$-bounded in $[0,C]$ and $\sigma$-sub-Gaussian noise.
+If $\phi$ is the distribution of $M^*$, then:
+\begin{equation}
+	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] = \tilde{O} \left( \sigma C \lambda_1 n^2 \sqrt{T} \ \right)
+\end{equation}
+Where $\lambda_1$ is the largest eigenvalue of the matrix $Q$ given as the solution of the Ricatti equations for the unconstrained optimal value function $V(s) = s^T Q s$ \cite{bertsekas1995dynamic}.
+\begin{proof}
+We simply apply the results of for eluder dimension in Section \ref{sec: eluder} to Corollary \ref{cor: ass regret} and upper bound the Lipschitz constant of the constrained LQR by $C \lambda_1$.
+\end{proof}
+\end{corollary}
+
+We note that it would also be possible to use the analysis in this paper to formally present an optimistic algorithm that satisfied similar regret bounds with high probability.
+We do not present these proofs in this paper to simplify the discussion, but also because the resultant algorithm UCRL-Eluder, outlined in Appendix \ref{app: UCRL-Eluder} would be computationally intractable even when presented with an approximate MDP planner.
+Further, we believe that PSRL will generally be more statistically efficient than an optimistic variant with similar regret bounds since the algorithm is not affected by loose analysis \cite{osband2013more}.
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\section{Eluder dimension}
+\label{sec: eluder}
+We extend the existing notion of eluder dimension for real-valued functions \cite{russo2013eluder} to any $L^2$ space.
+For any $\Gc \subseteq \Pc^{C,\sigma}_{\Xc,\Yc}$ we define $\Fc = \Exp[\Gc] := \{f | f=\Exp[G] \text{ for } G \in \Gc \}$.
+We consider sequential observations $y_i \sim G^*(x_i)$ which can equivalently be written $y_i = f^*(x_i) + \epsilon_i$ for $f^*(x_i) = \Exp[G^*(x_i)]$.
+Intuitively, the eluder dimension of $\Fc$ is the length $d$ of the longest possible sequence $x_1,..,x_d$ such that for all $i$, knowing the function values of $f(x_1),..,f(x_i)$ will not reveal $f(x_{i+1})$.
+
+\begin{mydef}[$ (\mathcal{F},\epsilon)-dependence$]
+\hspace{0.00000000000001mm} \newline
+We will say that $x \in \mathcal{X}$ is $(\Fc,\epsilon)$-dependent on $\{x_1,...,x_n\} \subseteq \Xc $
+$$ \iff \forall f,\tilde{f} \in \Fc, \ \ \sum_{i=1}^{n} \| f(x_i) - \tilde{f}(x_i) \|_2^2 \le \epsilon^2 \implies \| f(x) - \tilde{f}(x)\|_2 \le \epsilon.$$
+$x \in \mathcal{X}$ is $(\epsilon,\mathcal{F})$-independent of $\{x_1,..,x_n\}$ iff it does not satisfy the definition for dependence.
+\end{mydef}
+
+\begin{mydef}[Eluder Dimension]
+\label{def: Eluder} \hspace{0.00000000000001mm} \newline
+The eluder dimension ${\rm dim}_E(\Fc,\epsilon)$ is the length of the longest possible sequence of elements in $\Xc$ such that for some $\epsilon' \ge \epsilon$ every element is $(\Fc,\epsilon')$-independent of its predecessors.
+\end{mydef}
+
+Traditional notions from supervised learning, such as the VC dimension, are not sufficient to characterize the complexity of reinforcement learning.
+In fact, a family learnable in constant time for supervised learning may require arbitrarily long to learn to optimize \cite{russo2013eluder}.
+The Eluder dimension mirrors the linear dimension for vector spaces, which is the length of the longest sequence such that each element is linearly independent of its predecessors.
+We extend this notion of complexity to account for nonlinear and approximate dependencies.
+We overload our notation to write ${\rm dim}_E(\Gc,\epsilon) := {\rm dim}_E(\Exp[\Gc],\epsilon)$ whenever $\Gc \subseteq \Pc^{C,\sigma}_{\Xc,\Yc}$, which should be clear from the context.
+
+
+
+%--------------------------------------------------------------------------------------------------------
+\subsection{Eluder dimension for specific function classes}
+The eluder dimension is well-defined and straightforward notion for any $\Fc, \epsilon$.
+However, given $\Fc,\epsilon$ calculating the eluder dimension may take some additional analysis.
+We now provide bounds on the eluder dimension for some common function classes in a similar approach to earlier work \cite{russo2013}.
+These proofs are available in Appendix \ref{app: eluder dims}.
+
+\begin{prop}[Eluder dimension for finite $\mathcal{X}$]
+\hspace{0.00000000000001mm} \newline
+A counting argument shows that for $| \mathcal{X} | = X$ finite, any $\epsilon>0$ and any function class $\Fc$:
+$$ {\rm dim}_E( \mathcal{F}, \epsilon) \le X $$
+This bound is tight in the case of independent measurements.
+\end{prop}
+
+\begin{prop}[Eluder dimension for linear functions]
+\label{prop: eluder lin}
+\hspace{0.00000000000001mm} \newline
+Let $\mathcal{F} = \{ f \ | f(x) = \theta \phi(x)  \text{ for } \theta \in \Real^{n \times p}, \phi \in \Real^p , 
+\|\theta \|_2 \le C_\theta , \|\phi\|_2 \le C_\phi \}$
+then $\forall \mathcal{X}$:
+$$ {\rm dim}_E(\Fc, \epsilon) \le p(4n-1)\frac{e}{e-1} \log\left[ \left(1+\left( \frac{2C_\phi C_\theta}{\epsilon}\right)^2 \right)\left(4n-1\right) \right] + 1 = \tilde{O}(np) $$
+\end{prop}
+
+\begin{prop}[Eluder dimension for quadratic functions]
+\hspace{0.00000000000001mm} \newline
+Let $\mathcal{F} = \{ f \ | f(x) = \phi(x)^T \theta \phi(x)  \text{ for } \theta \in \Real^{p \times p}, \phi \in \Real^p , 
+\|\theta \|_2 \le C_\theta , \|\phi\|_2 \le C_\phi \}$
+then $\forall \Xc$:
+$$ {\rm dim}_E(\Fc, \epsilon) \le p(4p-1)\frac{e}{e-1} \log\left[ \left(1+\left( \frac{2 p C_\phi^2 C_\theta}{\epsilon}\right)^2 \right)\left(4p-1\right) \right] + 1 = \tilde{O}(p^2). $$
+\end{prop}
+
+\begin{prop}[Eluder dimension for generalized linear functions]
+\hspace{0.00000000000001mm} \newline
+Let $g(\cdot)$ be a component-wise independent function on $\Real^n$ with derivative in each component bounded  $\in [\underline{h},\overline{h}]$ with $\underline{h}>0$.
+Define $r = \frac{\overline{h}}{\underline{h}} > 1$ to be the condition number.
+If $\mathcal{F} = \{ f \ | f(x) = g(\theta \phi(x))  \text{ for } \theta \in \Real^{n \times p}, \phi \in \Real^p , 
+\|\theta \|_2 \le C_\theta , \|\phi\|_2 \le C_\phi \}$
+then for any $\Xc$:
+$${\rm dim}_E(\Fc, \epsilon) \le p \left(r^2(4n-2)+1\right)\frac{e}{e-1} \left(\log \left[\left(r^2(4n-2)+1 \right) \left(1+ \left(\frac{2C_\theta C_\phi}{\epsilon} \right)^2\right) \right] \right) + 1 = \tilde{O}(r^2 np)$$
+\end{prop}
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\section{Confidence sets}
+\label{sec: conf}
+We will now build confidence sets which contain the true function $f^*$ with high probability.
+The confidence sets are centered around the least squares estimate $\hat{f}_t^{LS} \in \arg \min_{f \in \Fc} L_{2,t}(f)$ where $L_{2,t}(f) := \sum_{i=1}^{t-1} \|f(x_t) - y_t \|^2_2$ is the cumulative squared prediciton error.
+The confidence sets are defined $\Fc_t = \Fc_t(\beta_t) := \{ f \in \Fc | \| f-\hat{f}_t^{LS} \|_{2,E_t} \le \sqrt{\beta_t} \}$ where $\beta_t$ is a parameter which controls the growth of the confidence set and the empirical 2-norm is defined $\|g\|_{2,E_t}^2 := \sum_{i=1}^{t-1} \|g(x_i)\|_2^2$.
+
+% In order to provide guarantees in a general setting we will make two simplifying assumptions on the function family $\Fc$.
+% We require that the mean value of $f$ is bounded and that the noise is in some sense light-tailed.
+% \begin{assumption}[Boundedness]
+% For all $f \in \Fc$ and $x \in \Xc$, $\|f(x)\|_2 \le C$
+% \end{assumption}
+% \begin{assumption}[Sub Gaussian noise]
+% For all $t \in \Nat$, $y_t - f^*(x_t)$ conditioned on $(H_t,f^*,x_t)$ is $\sigma$-sub Gaussian.
+% \end{assumption}
+
+For $\Fc \subseteq \Pc^{C,\sigma}_{\Xc,\Yc}$, we define the control parameter:
+\begin{equation}
+\label{eq: beta star}
+	\beta^*_t(\Fc,\delta,\alpha) := 8 \sigma^2 \log(N(\Fc,\alpha,\|\cdot\|_2)/\delta) +
+	2 \alpha t \left(8C + \sqrt{8\sigma^2 \log(4t^2/\delta)}) \right)
+\end{equation}
+This leads to confidence sets which contain the true function with high probability.
+
+\begin{prop}[Confidence sets with high probability]
+\label{prop: conf sets} \hspace{0.00000000000001mm} \newline
+For all $\delta>0$ and $\alpha >0$ and the confidence sets $\Fc_t = \Fc_t(\beta^*_t(\Fc,\delta,\alpha))$ for all $t \in \Nat$ then:
+$$\Prob \left( f^* \in \bigcap_{t=1}^\infty \Fc_t \right) \ge 1-2\delta $$
+\begin{proof}
+We combine standard martingale concentrations with a discretization scheme.
+The argument is essentially the same as Proposition 6 in \cite{russo2013}, but replaces statements about $\Real$ with more general $L^2$ properties.
+A full derivation is available in the Appendix \ref{app: conf sets}.
+\end{proof}
+\end{prop}
+
+\subsection{Bounding the sum of set widths}
+We now bound the deviation from $f^*$ by the maximum deviation within the confidence set.
+% Since the true function $f^*$ lies within the confidence set with high probability, so will any $\tilde{f}$ drawn from posterior sampling, since they are equal in distribution.
+% The optimistic variant will explicitly restrict itself to $\Fc_t$ so that it makes sense for us to focus our analysis where both the true and imagined $f^*$ both lie within $\Fc_t$.
+
+\begin{mydef}[Set widths]
+\hspace{0.00000000000001mm} \newline
+For any set of functions $\Fc$ we define the width of the set at $x$ to be the maximum L2 deviation between any two members of $\Fc$ evaluated at $x$.
+$$ w_\Fc(x) := \sup_{\overline{f},\underline{f} \in \Fc} \| \overline{f}(x) - \underline{f}(x)\|_2$$
+\end{mydef}
+
+We can bound for the number of large widths in terms of the eluder dimension.
+
+\begin{lemma}[Bounding the number of large widths]
+\hspace{0.00000000000001mm} \newline
+\label{lem: big widths}
+If $\{ \beta_t >0 \big| t \in \Nat \}$ is a nondecreasing sequence with $\Fc_t = \Fc_t(\beta_t)$ then
+$$ \sum_{k=1}^m \sum_{i=1}^\tau \Ind \{w_{\Fc_{t_k}}(x_{t_k+i}) > \epsilon \} \le 
+	\left( \frac{4\beta_T}{\epsilon^2}+ \tau \right) {\rm dim}_E(\Fc,\epsilon) $$
+
+\begin{proof}
+This result follows from proposition 8 in \cite{russo2013} but with a small adjustment to account for episodes. A full proof is given in Appendix \ref{app: large widths}.
+\end{proof}
+\end{lemma}
+
+We now use Lemma \ref{lem: big widths} to control the cumulative deviation through time.
+\begin{prop}[Bounding the sum of widths]
+\hspace{0.00000000000001mm} \newline
+\label{prop: widths}
+If $\{ \beta_t >0 \big| t \in \Nat \}$ is a nondecreasing sequence with $\Fc_t = \Fc_t(\beta_t)$ and $\|f\|_2 \le C$ for all $f \in \Fc$ then:
+\begin{equation}
+	\sum_{k=1}^m \sum_{i=1}^\tau w_{\Fc_{t_k}}(x_{t_k+i}) \le 
+	1 + \tau C {\rm dim}_E(\Fc,T^{-1}) + 4\sqrt{\beta_T {\rm dim}_E(\Fc,T^{-1}) T}
+\end{equation}
+
+\begin{proof}
+Once again we follow the analysis of Russo \cite{russo2013} and strealine notation by letting $w_t = w_{\Fc_{t_k}}(x_{t_k+i})$ abd $d = {\rm dim}_E(\Fc,T^{-1})$.
+Reordering the sequence $(w_1,..,w_T) \rightarrow (w_{i_1},..,w_{i_T})$ such that $w_{i_1}\ge..\ge w_{i_T}$ 
+we have that:
+$$ \sum_{k=1}^m \sum_{i=1}^\tau w_{\mathcal{F}_{t_k}}(x_{t_k+i})  = \sum_{t=1}^T w_{i_t} \le 1 + \sum_{i=1}^T w_{i_t} \Ind \{ w_{i_t} \ge T^{-1} \} $$.
+
+By the reordering we know that $w_{i_t} > \epsilon$ means that $\sum_{k=1}^m \sum_{i=1}^\tau \Ind \{w_{\Fc_{t_k}}(x_{t_k+i}) > \epsilon \} \ge t $.
+From Lemma \ref{lem: big widths}, $\epsilon \le \sqrt{\frac{4 \beta_T d}{t - \tau d}}$.
+So that if $w_{i_t} > T^{-1}$ then $w_{i_t} \le \min \{ C , \sqrt{\frac{4 \beta_T d}{t - \tau d}} \}$. Therefore,
+$$\sum_{i=1}^T w_{i_t} \Ind \{ w_{i_t} \ge T^{-1} \} \le \tau C d + \sum_{t=\tau d +1}^T \sqrt{\frac{4 \beta_T d}{t - \tau d}} \le 
+\tau C d + 2 \sqrt{\beta_T} \int_0^T \sqrt{ \frac{d}{t} } \,dt \le \tau C d + 4 \sqrt{\beta_T d T}$$
+
+\end{proof}
+
+\end{prop}
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\section{Analysis}
+We will now follow the familiar line of argument that relates the regret of an optimistic or posterior sampling algorithm to the Bellman error \cite{jaksch2010near,osband2013more}.
+We streamline our discussion of $P^{M}, R^{M}, V^{M}_{\mu,i}, U^{M}_{i}$ and $\Tc^M_\mu$ by simply writing $*$ in place of $M^*$ or $\mu^*$ and $k$ in place of $M_k$ or $\mu_k$ where appropriate; for example $V^*_{k,i} := V^{M^*}_{\tilde{\mu}_k,i}$. 
+
+The first step breaks down the regret by adding and subtracting the \emph{imagined} optimal reward of $\mu_k$ under the MDP $M_k$.
+\begin{equation}
+	\Delta_k = \left( V^*_{*,1} - V^*_{k,1} \right)(s_0)
+	= \left( V^*_{*,1} - V^k_{k,1} \right)(s_0) + \left( V^k_{k,1} - V^*_{k,1} \right)(s_0)
+\end{equation}
+Here $s_0$ is a distinguished initial state, but moving to general $\rho(s)$ poses no real challenge.
+Algorithms based upon optimism bound $\left( V^*_{*,1} - V^k_{k,1} \right) \le 0$ with high probability.
+For PSRL we use Lemma \ref{lem: ps} and the tower property to see that this is zero in expectation.
+\begin{lemma}[Posterior sampling]
+\label{lem: ps}
+\hspace{0.00000000000001mm} \newline
+If $\phi$ is the distribution of $M^*$ then, for any $\sigma(H_{t_k})$-measurable function $g$,
+\begin{equation}
+\label{eq: ps}
+	\Exp [g(M^*) | H_{t_k} ] = \Exp [g(M_k) | H_{t_k} ]
+\end{equation}
+\end{lemma}
+
+We introduce the Bellman operator $\mathcal{T}_{\mu}^{M}$, which for any MDP $M = (\Sc, \Ac, R^M, P^M, \tau, \rho)$, stationary policy $\mu:\Sc \rightarrow \Ac$ and value function $V:\Sc \rightarrow \mathds{R}$, is defined by
+$$\mathcal{T}_{\mu}^{M} V(s) := \overline{r}^{M} (s, \mu(s)) + \int_{s' \in \Sc} P^{M}(s' | s, \mu(s)) V(s').$$
+This returns the expected value of state $s$ where we follow the policy $\mu$ under the laws of $M$, for one time step.
+The following lemma gives a concise form for the dynamic programming paradigm in terms of the Bellman operator.
+
+\begin{lemma}[Dynamic programming equation]
+\label{lem: DPl} \hspace{0.000000001mm} \newline
+For any MDP $M = (\Sc, \Ac, R^M, P^M, \tau, \rho)$ and policy $\mu:\Sc \times \{1,\ldots,\tau\} \rightarrow \Ac$, the value functions $V^M_\mu$ satisfy
+\begin{equation}\label{eq: DP}
+V_{\mu,i}^{M} = \mathcal{T}_{\mu(\cdot,i)}^M V_{\mu,i+1}^M
+\end{equation}
+for $i=1\dots \tau$, with $V_{\mu,\tau+1}^{M} := 0$. 
+\end{lemma}
+
+Through repeated application of the dynamic programming operator and taking expectation of martingale differences we can mirror earlier analysis \cite{osband2013more} to equate expected regret with the cumulative Bellman error:
+\begin{equation}
+\label{eq: reg bellman}
+	\Exp [ \Delta_k ] = \sum_{i=1}^\tau (\Tc^k_{k,i}-\Tc^*_{k,i})V^k_{k,i+1}(s_{t_k+i})
+\end{equation}
+
+
+\subsection{Lipschitz continuity}
+\label{sec: lipschitz}
+Efficient regret bounds for MDPs with an infinite number of states and actions require some regularity assumption.
+One natural notion is that nearby states might have similar optimal values, or that the optimal value function function might be Lipschitz.
+However, any discontinuous reward function will usually lead to discontious values functions so that this assumption is violated in many settings of interest.
+
+Instead we supose that the \emph{future} value is Lipschitz in the sense of equation \eqref{eq: future Lipschitz}.
+This will will be satisfied whenever the underlying value function is Lipschitz, but is a strictly weaker requirement since the system noise helps to smooth future values.
+
+Since $\Pc$ has $\sigma_P$-sub-Gaussian noise we write $s_{t+1} = \overline{p}^M(s_t,a_t)+\epsilon^P_t$ in the natural way.
+We now use equation \eqref{eq: reg bellman} to reduce regret to a sum of set widths.
+To reduce clutter and more closely follow the notation of Section \ref{sec: eluder} we will write $x_{k,i}=(s_{t_k+i},a_{t_k+i})$.
+% where $a_{t_k+i} \sim \mu^{M_k}(s_{t_k+i})$.
+\begin{eqnarray}
+	\Exp [ \Delta_k ] &\le& \Exp \left[ \sum_{i=1}^\tau \left\{  \overline{r}^k(x_{k,i}) - \overline{r}^*(x_{k,i})
+	+  U^k_{i}(P^k(x_{k,i})) - U^k_{i}(P^*(x_{k,i})) \right\} \right] \nonumber \\
+	&\le& \Exp\left[ \sum_{i=1}^\tau \left\{ | \overline{r}^k(x_{k,i}) - \overline{r}^*(x_{k,i})|
+	+ K^k \|\overline{p}^k(x_{k,i}) - \overline{p}^*(x_{k,i}) \|_2 \right\}\right]
+\end{eqnarray}
+Where $K^k$ is a global Lipschitz constant for the future value function of $M_k$.
+
+We now use the results from Sections \ref{sec: eluder} and \ref{sec: conf} to form the corresponding confidence sets $\Rc_k := \Rc_{t_k}(\beta^*(\Rc,\delta,\alpha))$ and $\Pc_k := \Pc_{t_k}(\beta^*(\Pc,\delta,\alpha))$ for the reward and transition functions respectively.
+Let $A = \{R^*, R_k \in \Rc_k \ \forall k \}$ and $B = \{P^*,P_k \in \Pc_k \ \forall k \}$ and condition upon these events to give:
+\begin{eqnarray}
+\label{eq: reg widths}
+	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] &\le& 
+	\Exp\left[ \sum_{k=1}^m \sum_{i=1}^\tau 
+		\left\{ | \overline{r}^k(x_{k,i}) - \overline{r}^*(x_{k,i})|
+		+ K^k \|\overline{p}^k(x_{k,i}) - \overline{p}^*(x_{k,i}) \|_2 \right\}\right] \nonumber \\
+	&\le& \sum_{k=1}^m \sum_{i=1}^\tau \left\{ w_{\Rc_k}(x_{k,i}) +
+		 \Exp[K^k|A,B] w_{\Pc_k}(x_{k,i}) + 8 \delta (C_\Rc + C_\Pc) \right\}
+\end{eqnarray}
+Posterior sampling ensures that $\Exp[K^k] = \Exp[K^*]$ so that 
+$\Exp[K^k|A,B] \le \frac{\Exp[K^*]}{\Prob(A,B)} \le \frac{\Exp[K^*]}{1-8\delta}$
+by a union bound on $\{A^c \cup B^c\}$.
+We fix $\delta = 1/8T$ to see that:
+$$ \Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le (C_\Rc + C_\Pc) + 
+	\sum_{k=1}^m \sum_{i=1}^\tau w_{\Rc_k}(x_{k,i}) 
+	+ \Exp[K^*] \left(1+\frac{1}{T-1} \right)\sum_{k=1}^m \sum_{i=1}^\tau w_{\Pc_t}(x_{k,i})  $$
+We now use equation \eqref{eq: beta star} together with Proposition \ref{prop: widths} to obtain our regret bounds.
+For ease of notation we will write $d_\Rc = {\rm dim}_E(\Rc,T^{-1})$ and $d_\Pc = {\rm dim}_E(\Pc,T^{-1})$.
+\begin{eqnarray}
+	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] &\le&
+	2 + (C_\Rc + C_\Pc) + \tau(C_\Rc d_\Rc+ C_\Pc d_\Pc) + \nonumber \\
+	&& \  4 \sqrt{\beta_T^*(\Rc,1/8T,\alpha) d_\Rc T} + 4 \sqrt{\beta_T^*(\Pc,1/8T,\alpha) d_\Pc T} 
+\end{eqnarray}
+We let $\alpha = 1/T^2$ and write $n_\Fc = \log(8 N(\Fc,1/T^2,\|\cdot\|_2)T)$ for $\Rc$ and $\Pc$ to complete our proof of Theorem \ref{thm: main regret}:
+\begin{eqnarray}
+	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le
+	\bigg[ C_\Rc + C_\Pc \bigg] + 
+	\bigg[ 1 + \tau C_\Rc d_\Rc + 8\sqrt{d_\Rc(4C_\Rc + \sqrt{2\sigma_\Rc^2 \log(32T^3)})}
+	+ 8\sqrt{2 \sigma_\Rc^2 n_\Rc d_\Rc T} \bigg] \nonumber \\
+	+ \Exp[K^*]\left(1+\frac{1}{T-1}\right)\left( 1 + \tau C_\Pc d_\Pc + 8\sqrt{d_\Pc(4C_\Pc + \sqrt{2\sigma_\Pc^2 \log(32T^3)})}
+	+ 8\sqrt{2 \sigma_\Pc^2 n_\Pc d_\Pc T} \right) \nonumber
+\end{eqnarray}
+The first term $[C_\Rc + C_\Pc]$ bounds the contribution from missed confidence sets.
+The second set of square brackets bounds the cost of learning the reward function $R^*$.
+In most problems the remaining contribution from transitions and lost future value will be dominant.
+To clarify the assymptotic dependence we will now introduce another common notion of dimension.
+\begin{mydef}
+\label{def: kol}
+The Kolmogorov dimension of a function class $\Fc$ is given by:
+$$ {\rm dim}_K(\Fc) := \limsup_{\alpha \downarrow 0} \frac{\log(N(\Fc,\alpha,\|\cdot\|_2))}{\log(1/\alpha)} .$$
+\end{mydef}
+Using this definition together with $n_\Rc,n_\Pc$ we complete our proof of Corollary \ref{cor: ass regret}.
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\section{Conclusions}
+We present the first unified analysis for model-based reinforcement in terms of the dimensionality of the function classes of rewards $\Rc$ and transitions $\Pc$.
+What is more, we show that the simple and computationally efficient algorithm PSRL satisfies these bounds.
+Our results provide new state of the guarantees when specialized to several important problem settings but in others, such as factored MDPs, alternative analysis can produce tighter bounds even for the same algorithm \cite{osband2014near}.
+We also wonder whether it is possible to extend our analysis to learning in MDPs without episodic resets.
+However, there is a more fundamental quagmire for model-based reinforcement learning in complex systems that even solving for the optimal policy in a \emph{known} MDP may be intractable.
+In future work, we would like to examine whether it is possible to attain similar regret bounds with a model-free algorithm when the optimal value function $V^*$ lies in $\mathcal{V}$ \cite{van2014generalization}.
+
+% We present the first unified analysis for efficient regret bounds in reinforcement learning across MDPs with general rewards in $\Rc \subseteq \Pc^{C_\Rc,\sigma_\Rc}_{\Sc \times \Ac, \Real}$ and transitions in $\Pc \subseteq \Pc^{C_\Pc,\sigma_\Pc}_{\Sc \times \Ac, \Sc}$. in terms of the dimensionality of $\Rc$ and $\Pc$.
+% To account for the complexity of the reinforcement learning problem, we extend the definition of Eluder dimension from the bandit setting and obtain expected regret bounds $\tilde{O}\left( \sigma_\Rc \sqrt{d_K(\Rc)d_E(\Rc,T^{-1})T} + \sigma_\Pc \Exp[K^*] \sqrt{d_K(\Pc) d_E(\Pc,T^{-1}) T} \right)$.
+% This general analysis provide new state of the art guarantees when specified to several problem settings, including linear quadratic systems.
+% What is more, we show that the conceptually simple and computationally efficient algorithm PSRL attains these bounds irrespective of the particular structure of $\Rc$ and $\Pc$.
+
+% We present regret bounds for \emph{posterior sampling for reinforcement learning} for an extremely general class of MDPs.
+% The $\tilde{O}\left( \sigma \sqrt{d_E(\Rc)d_K(\Rc)T} + \sigma \Exp[K^*] \sqrt{d_E(\Pc) d_K(\Pc) T} \right)$ Bayesian regret bounds 
+% provide new state of the art guarantees across several problem settings, including linear quadratic systems.
+% We extend the notion of Eluder dimension from bandit problems to reinforcement learning to effectively express the complexity of the learning problem.
+% PSRL is conceptually simple, computationally efficient and can easily incorporate prior knowledge.
+% Unlike UCB methods, the \emph{algorithm} is separated from the \emph{analysis} so that efficient learning is attained even without careful construction of confidence sets or tight bounds on the Eluder dimension.
+
+
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\newpage
+\small{
+\bibliography{referenceInformation.bib}
+\bibliographystyle{unsrt}
+}
+\newpage
+
+
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\appendix
+
+\section{Confidence sets with high probability}
+\label{app: conf sets}
+In this appendix we will build up to a proof of Proposition \ref{prop: conf sets}, that the confidence sets defined by $\beta^*$ in equation \ref{eq: beta star} hold with high probability.
+We begin with some elementary results from martingale theory.
+
+\begin{lemma}[Exponential Martingale]
+\hspace{0.000000001mm} \newline
+Let $Z_i \in L^1$ be real-calued random variables adapted to $\mathcal{H}_i$.
+We define the conditional mean $\mu_i = \Exp[ Z_i | \mathcal{H}_{i-1} ] $ and conditional cumulant generating function $\psi_i(\lambda) = \log \Exp [ \exp \left(\lambda ( Z_i -\mu_i)\right) | \mathcal{H}_{i-1} ] $, then
+$$ M_n ( \lambda ) = \exp \left( \sum_1^n \lambda (Z_i -\mu_i) - \psi_i(\lambda) \right) $$
+is a martingale with $\Exp[M_n(\lambda)] = 1$.
+\end{lemma}
+
+\begin{lemma}[Concentration Guarantee]
+\label{lem: mg conc} \hspace{0.000000001mm} \newline
+For $Z_i$ adapted real $L^1$ random variables adapted to $\mathcal{H}_i$. We define the conditional mean $\mu_i = \Exp[ Z_i | \mathcal{H}_{i-1} ] $ and conditional cumulant generating function $\psi_i(\lambda) = \log \Exp [ \exp \left(\lambda ( Z_i -\mu_i)\right) | \mathcal{H}_{i-1} ] $.
+$$ \Prob \left( \bigcup_{n=1}^\infty \{ \sum_1^n \lambda (Z_i -\mu_i) - \psi_i(\lambda) \ge x\} \right) \le e^{-x}$$
+\end{lemma}
+
+Both of these lemmas are available in earlier discussion for real-valued variables \cite{russo2013}.
+We now specialize our discussion to the $L^2$-space $\Yc$ where $<y,y> = \|y \|_2^2$.
+To simplify notation we will write $f^*_t := f^*(x_t)$ and $f_t = f(x_t)$ for arbitrary $f\in \Fc$.
+We now define 
+\begin{eqnarray*}
+	Z_t &=& \|f_t^* - y_t \|_2 - \| f_t - y_t \|_2 \\
+	&=& <f_t^* - y_t, f_t^* - y_t> - <f_t - y_t, f_t - y_t, f_t - y_t> \\
+	&=& -<f_t - f_t^*, f_t - f_t^*> + 2<f_t - f_t^*, y_t-f_t^*> \\
+	&=& - \|f_t - f_t^* \|_2 + 2<f_t - f_t^*, \epsilon_t>
+\end{eqnarray*}
+so that clearly $\mu_t = - \|f_t - f_t^* \|_2$.
+Now since we have said that the noise is $\sigma$-sub-Gaussian,
+$ \Exp [ \exp \left( < \phi, \epsilon > \right) ] \le \exp \left( \frac{ \| \phi \|_2^2 \sigma^2}{2} \right) 
+\text{ } \forall \phi \in \mathcal{Y}$.
+From here we can deduce that:
+\begin{eqnarray*}
+	\psi_t(\lambda) &=& \log \Exp [ \exp \left(\lambda ( Z_t -\mu_t)\right) | \mathcal{H}_{t-1} ]  \\
+	&=& \log \Exp[ \exp (2 \lambda <f_t - f_t^*, \epsilon_t>)] \\
+	&\le& \frac{\|2 \lambda (f_t - f_t^*) \|_2^2 \sigma^2}{2}.
+\end{eqnarray*}
+
+We now write $\sum_{i=1}^{t-1} Z_i = L_{2,t}(f^*) - L_{2,t}(f)$ according to our earlier definition of $L_{2,t}$.
+We can apply Lemma \ref{lem: mg conc} with $\lambda = 1/{4\sigma^2}$, $x=log(1/\delta)$ to obtain:
+$$ \Prob \{ \left( L_{2,t}(f) \ge L_{2,t}(f^*) + \frac{1}{2} \| f- f^*\|_{2,E_t} - 4\sigma^2\log(1/\delta) \right) \text{ } \forall t \} \ge 1-\delta$$
+substituting $f = \hat{f}$ to be the least squares solution which minimizes $L_{2,t}(f)$ we can remove $L_{2,t}(\hat{f}) - L_{2,t}(f^*) \le 0$.
+From here we use an $\alpha$-cover discretization argument to complete the proof of Proposition \ref{prop: conf sets}.
+
+Let $\mathcal{F}^\alpha \subset \mathcal{F}$ be an $\alpha$-2 cover of $\mathcal{F}$
+such that $\forall f \in \mathcal{F}$ there is some $ \| f^\alpha - f \|_2 \le \alpha$.
+We can use a union bound on $\mathcal{F}^\alpha$ so that $\forall f \in \mathcal{F}$:
+\begin{eqnarray}
+\label{eq: L err bounds}
+	L_{2,t}(f) - L_{2,t}(f^*) \ge \frac{1}{2} \|f-f^*\|_{2,E_t} - 4\sigma^2\log(N(\mathcal{F},\alpha,\|\cdot\|_2)/\delta) + DE(\alpha) \\
+	\text{For } DE(\alpha) = \min_{f^\alpha \in \Fc^\alpha} \left\{ \frac{1}{2} \|f^\alpha-f^*\|_{2,E_t}^2 - 
+	\frac{1}{2} \| f-f^* \|_{2,E_t}^2 + L_{2,t}(f) - L_{2,t}(f^\alpha) \right\} \nonumber
+\end{eqnarray}
+We will now seek to bound this discretization error with high probability.
+
+\begin{lemma}[Bounding discretization error]
+\label{lem: disc err} \hspace{0.000000001mm} \newline
+If $\| f^\alpha(x) - f(x) \|_2 \le \alpha$ for all $x \in \Xc$ then with probability at least $1-\delta$:
+$$DE(\alpha) \le \alpha t \left[8C + \sqrt{8\sigma^2\log(4t^2/\delta)} \right] $$
+\begin{proof}
+For non-trivial bounds we will consider the case of $\alpha \le C$ and note that via Cauchy-Schwarz:
+$$ \|f^\alpha(x) \|_2^2 - \|f(x)\|_2^2 \le \max_{\|y\|_2\le \alpha} \|f(x)+y\|_2^2 - \|f\|_2^2 \le 2C\alpha + \alpha^2.$$
+From here we can say that
+\begin{eqnarray*}
+	\|f^\alpha(x) - f^*(x) \|_2^2 - \|f(x)-f^*(x)\|_2^2 = \|f^\alpha(x)\|_2^2 - \|f(x)\|_2^2 + 2<f^*(x),f(x)-f^\alpha(x)> 
+		\le 4C\alpha \\
+	\|y - f(x)\|_2^2 - \|y-f^\alpha(x)\|_2^2 = 2<y,f^\alpha(x)-f(x)> + \|f(x)\|_2^2 - \|f^\alpha(x)\|_2^2 
+		\le 2\alpha |y| + 2C \alpha + \alpha^2
+\end{eqnarray*}
+Summing these expressions over time $i=1,..,t-1$ and using sub-gaussian high probability bounds on $|y|$ gives our desired result.
+\end{proof}
+\end{lemma}
+
+Finally we apply Lemma \ref{lem: disc err} to equation \ref{eq: L err bounds} and use the fact that $\hat{f}^{LS}_t$ is the $L_{2,t}$ minimizer to obtain the result that with probability at least $1-2\delta$:
+$$ \| \hat{f}^{LS}_t - f^* \|_{2,E_t} \le \sqrt{\beta^*_t(\Fc,\alpha,\delta) }$$
+Which is our desired result.
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\section{Bounding the number of large widths}
+\label{app: large widths}
+
+\begin{lemma2}[Bounding the number of large widths]
+\hspace{0.00000000000001mm} \newline
+If $\{ \beta_t >0 \big| t \in \Nat \}$ is a nondecreasing sequence with $\Fc_t = \Fc_t(\beta_t)$ then
+$$ \sum_{k=1}^m \sum_{i=1}^\tau \Ind \{w_{\Fc_{t_k}}(x_{t_k+i}) > \epsilon \} \le 
+	\left( \frac{4\beta_T}{\epsilon^2}+ \tau \right) {\rm dim}_E(\Fc,\epsilon) $$
+
+\begin{proof}
+We first imagine that $w_{\Fc_t}(x_t) > \epsilon$ and is $\epsilon$-dependent on $K$ disjoint subsequences of $x_1,..,x_{t-1}$.
+If $x_t$ is $\epsilon$-dependent on $K$ disjoint subsequences then there exist $\|\overline{f} - \underline{f} \|_{2,E_t} > K \epsilon^2$. By the triangle inequality $\|\overline{f} - \underline{f} \|_{2,E_t} \le 2\sqrt{\beta_t} \le 2\sqrt{\beta_T}$ so that $K < 4\beta_T / \epsilon^2$.
+
+In the case without episodic delay, Russo went on to show that in any sequence of length $l$ there is some element which is $\epsilon$-dependent on at least $\frac{l}{{\rm dim}_E(\Fc,\epsilon)}-1$ disjoint subsequences \cite{russo2013}.
+Our analysis follows similarly, but we may lose up to $\tau-1$ proper subsequences due to the delay in updating the episode.
+This means that we can only say that $K \ge \frac{l}{{\rm dim}_E(\Fc,\epsilon)}-\tau$.
+Considering the subsequence $w_{\Fc_{t_k}}(x_{t_k+i}) > \epsilon$ we see that $l \le \left( \frac{4\beta_T}{\epsilon^2}+ \tau \right) {\rm dim}_E(\Fc,\epsilon)$ as required.
+\end{proof}
+\end{lemma2}
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\section{Eluder dimension for specific function classes}
+\label{app: eluder dims}
+In this section of the appendix we will provide bounds upon the eluder dimension for some canonical function classes.
+Recalling Definition \ref{def: Eluder}, ${\rm dim}_E(\Fc,\epsilon)$ is the length $d$ of the longest sequence $x_1,..,x_d$ such that for some $\epsilon' \ge \epsilon$:
+\begin{equation}
+\label{eq: w_k}
+	w_k = \sup \left\{ \|(\overline{f} - \underline{f}) (x_k)\|_2 \ \bigg| \  \|\overline{f}-\underline{f}\|_{2,E_t} \le \epsilon' \right\}
+	> \epsilon'
+\end{equation}
+for each $k\le d$.
+\subsection{Finite domain $\Xc$}
+Any $x \in \Xc$ is $\epsilon$-dependent upon itself for all $\epsilon>0$.
+Therefore for all $\epsilon>0$ the eluder dimension of $\Fc$ is bounded by $|\Xc|$.
+
+\subsection{Linear functions $f(x) = \theta \phi(x)$}
+Let $\mathcal{F} = \{ f \ | f(x) = \theta \phi(x)  \text{ for } \theta \in \Real^{n \times p}, \phi \in \Real^p , 
+\|\theta \|_2 \le C_\theta , \|\phi\|_2 \le C_\phi \}$.
+To simplify our notation we will write $\phi_k = \phi(x_k)$ and $\theta = \theta_1 - \theta_2$.
+From here, we may manipulate the expression
+$$ \|\theta \phi \|_2^2 = \phi_k^T \theta^T\theta \phi_k = Tr(\phi_k^T \theta^T\theta \phi_k) = Tr(\theta \phi_k \phi_k^T \theta)$$
+$$ \implies w_k = \sup_{\theta} \{ \|\theta \phi_k \|_2 \ \big| Tr(\theta \Phi_k \theta^T) \le \epsilon^2 \} 
+	\text{ where } \Phi_k := \sum_{i=1}^{k-1} \phi_i \phi_i^T $$
+We next require a lemma which gives an upper bound for trace constrained optimizations.
+
+
+\begin{lemma}[Bounding norms under trace constraints]
+\label{lem: norms trace} \hspace{0.000000001mm} \newline
+Let $\theta \in \Real^{n \times p}, \phi \in \Real^p$ and $V \in \Real_{++}^{p \times p}$, the set of positive definite $p\times p$ matrices, then:
+$$ W^2  = \max_\theta \|\theta \phi \|_2^2  \text{ subject to } Tr(\theta V \theta^T) \le \epsilon^2 $$
+is bounded above by $W^2 \le (2n-1) \epsilon^2 \| \phi \|^2_{V^{-1}}$ where $\| \phi \|_A^2 := \phi^T A \phi$.
+
+\begin{proof}
+We first note that $ \|\theta \phi \|_2^2 = Tr(\theta \phi \phi^T \theta^T) = \sum_1^n (\theta \phi)_i^2 \le \left( \sum_1^n (\theta \phi)_i \right)^2 $ by Jensen's inequality.
+We define $\tilde{\Phi} \in \Real^{n \times p}$ such that each row of  $\tilde{\Phi} = \phi^T $. Then this inequality can be expressed as:
+$$ W^2 = Tr(\theta \phi \phi^T \theta^T) \le Sum ( \theta \otimes \tilde{\Phi} )^2 $$ 
+Where  $A\otimes B = C \text{ for } C_{ij} = A_{ij}B_{ij} \text{ and }Sum(C) := \sum_{i,j}C_{ij} $
+We can now obtain an upper bound for our original problem through this convex relaxation:
+$$ \max_\theta Sum ( \theta \otimes \tilde{\Phi} ) \text{ subject to } Tr(\theta V \theta^T) \le \epsilon^2 $$
+
+We can now form the lagrangian $\mathcal{L}(\theta, \lambda) = -Sum ( \theta \otimes \tilde{\Phi} ) + \lambda ( Tr(\theta V \theta^T) - \epsilon^2)$.
+Solving for first order optimality $\triangledown_\theta \mathcal{L} = 0 \implies \theta^* = \frac{1}{2\lambda} \tilde{\Phi} V^{-1}$.
+From here we form the dual objective 
+$$g(\lambda) = -Sum (\frac{1}{2\lambda}\tilde{\Phi}V^{-1} \otimes \tilde{\Phi}) + 
+	Tr(\frac{1}{4\lambda}\tilde{\Phi}V^{-1}\tilde{\Phi}^T) - \lambda \epsilon^2$$
+Here we solve for the dual-optimal $\lambda^*$
+$\triangledown_\lambda g = 0 \implies  \frac{1}{2{\lambda^*}}^2 Sum (\frac{1}{2\lambda}\tilde{\Phi}V^{-1} \otimes \tilde{\Phi}) 
+	-  \frac{1}{4{\lambda^*}}^2 Tr(\frac{1}{4\lambda}\tilde{\Phi}V^{-1}\tilde{\Phi}^T) = \epsilon^2$.
+From the definition of $\tilde{\Phi}$, 
+$Sum ( \tilde{\Phi}V^{-1} \otimes \tilde{\Phi} ) = n \phi^T V^{-1} \phi$ and $Tr(\tilde{\Phi}V^{-1}\tilde{\Phi}^T) = \phi^T V^{-1}\phi$.
+From this we can simplify our expression to conclude:
+
+\begin{eqnarray*}
+	\frac{n}{2{\lambda^*}^2} \phi^T V^{-1} \phi - \frac{1}{4{\lambda^*}^2} \phi^T V^{-1} \phi = \epsilon^2 \implies {\lambda^*} 
+	= \sqrt{ \frac{(n-1/2)}{2\epsilon^2} } \| \phi \|_{V^{-1}} \\
+	\implies g(\lambda^*) = -\frac{n}{2\lambda^*} \|\phi \|_{V^{-1}}^2 + \frac{1}{4\lambda^*} \|\phi \|_{V^{-1}}^2 - \lambda^* \epsilon \\
+	\text{ strong duality } \implies f(\theta^*) = g(\lambda^*) = \sqrt{2n-1} \epsilon \| \phi \|_{V^{-1}}
+\end{eqnarray*}
+From here we conclude that the optimal value of $W^2 \le f(\theta^*)^2 \le (2n-1) \epsilon^2 \|\phi\|_{V^{-1}}^2$.
+\end{proof}
+\end{lemma}
+
+Using this lemma, we will be able to address the eluder dimension for linear functions.
+Using the definition of $w_k$ from equation \ref{eq: w_k} together with $\Phi_k$ we may rewrite:
+$$ w_k = \max_\theta \{ \sqrt{Tr(\theta \phi_k \phi_k^T \theta)} \ \big| \ Tr(\theta \Phi_k \theta^T) \le \epsilon^2\}.$$
+Let $V_k := \Phi_k + \left(\frac{\epsilon}{2C_\theta}\right)^2 I $ so that $Tr(\theta \Phi_k \theta^T) \le \epsilon^2 \implies Tr(\theta V_k \theta^T) \le 2\epsilon^2$ through a triangle inequality.
+Now applying Lemma \ref{lem: norms trace} we can say that $w_k \le \epsilon \sqrt{4n-2} \|\phi_k\|_{V_k^{-1}}$.
+This means that if $w_k \ge \epsilon$ then $\|\phi_k\|_{V_k^{-1}}^2 > \frac{1}{4n-2} >0$.
+
+We now imagine that $w_i \ge \epsilon$ for each $i<k$.
+Then since $V_k = V_{k-1} + \phi_k \phi_k^T$ we can use the Matrix Determinant together with the above observation to say that:
+\begin{equation} 
+\label{eq: det lower}
+	det(V_k) = det(V_{k-1})(1+ \phi_k^T V_K^{-1} \phi_k) \ge det(V_{k-1})\left(1 + \frac{1}{4n-2}\right) \ge ..
+		\ge \lambda^{p} \left( 1 + \frac{1}{4n-2} \right)^{k-1}
+\end{equation}
+for $\lambda := \left(\frac{\epsilon}{2C_\theta}\right)^2$.
+To get an upper bound on the determinant we note that $det(V_k)$ is maximized when all eigenvalues are equal or equivalently:
+\begin{equation}
+\label{eq: det upper}
+det(V_k) \le \left( \frac{Tr(V_k)}{p}\right)^p \le \left(\frac{C_\phi^2(k-1)}{p} + \lambda \right)^p
+\end{equation}
+
+Now using equations \ref{eq: det lower} and \ref{eq: det upper} together we see that $k$ must satistfy the inequality
+$ \left( 1 + \frac{1}{4n-2} \right)^{(k-1)/p} \le \frac{C_\phi^2(k-1)}{\lambda  p} + 1$.
+We now write $\zeta_0 = \frac{1}{4n-2}$ and $\alpha_0 = \frac{C_\phi^2}{\lambda} = \left( \frac{2C_\phi C_\theta}{\epsilon}\right)^2$ so that we can epress this as:
+$$ (1 + \zeta_0)^{\frac{k-1}{p}} \le \alpha_0 \frac{k-1}{p} +1 $$
+We now use the result that $B(x,\alpha) = \max\{B  \ \big| \ (1+x)^B \le \alpha B+1\} \le \frac{1+x}{x}\frac{e}{e-1} \{\log(1+\alpha)+\log(\frac{1+x}{x})\}$.
+We complete our proof of Proposition \ref{prop: eluder lin} through computing this upper bound at $(\zeta_0, \alpha_0)$,
+$$ {\rm dim}_E(\Fc, \epsilon) \le p(4n-1)\frac{e}{e-1} \log\left[ \left(1+\left( \frac{2C_\phi C_\theta}{\epsilon}\right)^2 \right)\left(4n-1\right) \right] + 1 = \tilde{O}(np). $$
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+\subsection{Quadratic functions $f(x) = \phi^T(x) \theta \phi(x) $}
+Let $\mathcal{F} = \{ f \ | f(x) = \phi(x)^T \theta \phi(x)  \text{ for } \theta \in \Real^{p \times p}, \phi \in \Real^p , 
+\|\theta \|_2 \le C_\theta , \|\phi\|_2 \le C_\phi \}$ then for any $\Xc$ we can say that:
+$$ {\rm dim}_E(\Fc, \epsilon) \le p(4p-1)\frac{e}{e-1} \log\left[ \left(1+\left( \frac{2 p C_\phi^2 C_\theta}{\epsilon}\right)^2 \right)\left(4p-1\right) \right] + 1 = \tilde{O}(p^2). $$
+Where we have simply applied the linear result with $\tilde{\epsilon} = \frac{\epsilon}{p C_\Pc}$.
+This is valid since if we can identify the linear function $g(x) = \theta \phi(x)$ to within this tolerance then we will certainly know $f(x)$ as well.
+
+
+\subsection{Generalized linear models}
+Let $g(\cdot)$ be a component-wise independent function on $\Real^n$ with derivative in each component bounded  $\in [\underline{h},\overline{h}]$ with $\underline{h}>0$.
+Define $r = \frac{\overline{h}}{\underline{h}} > 1$ to be the condition number.
+If $\mathcal{F} = \{ f \ | f(x) = g(\theta \phi(x))  \text{ for } \theta \in \Real^{n \times p}, \phi \in \Real^p , 
+\|\theta \|_2 \le C_\theta , \|\phi\|_2 \le C_\phi \}$
+then for any $\Xc$:
+$${\rm dim}_E(\Fc, \epsilon) \le p \left(r^2(4n-2)+1\right)\frac{e}{e-1} \left(\log \left[\left(r^2(4n-2)+1 \right) \left(1+ \left(\frac{2C_\theta C_\phi}{\epsilon} \right)^2\right) \right] \right) + 1 = \tilde{O}(r^2 np)$$
+
+This proof follows exactly as per the linear case, but first using a simple reduction on the form of equation \eqref{eq: w_k}.
+\begin{eqnarray*}
+	w_k &=& \sup \left\{ \|(\overline{f} - \underline{f}) (x_k)\|_2 \ \bigg| \  \|\overline{f}-\underline{f}\|_{2,E_t} \le \epsilon' \right\} \\
+	&\le& \max_{\theta_1, \theta_2} \left\{ \|g(\theta_1 \phi_k) - g(\theta_2 \phi_k) \|_2 \ \big| \ 
+		\sum_{i=1}^{k-1} \|g(\theta_1 \phi_i) - g(\theta_2 \phi_i) \|_2^2 \le \epsilon^2 \right\} \\
+	&\le& \max_\theta \left\{ \overline{h} \|\theta \phi_k \|_2 \ \big| \ 
+		\sum_{i=1}^{k-1} \underline{h}^2 \| \theta \phi_i \|_2^2 \le \epsilon^2 \right\}
+\end{eqnarray*}
+To which we can now apply Lemma \ref{lem: norms trace} with the $\epsilon$ rescaled by $r$.
+Following the same arguments as for linear functions now completes our proof.
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+\section{UCRL-Eluder}
+\label{app: UCRL-Eluder}
+For completeness, we explicitly outline an optimistic algorithm which uses the confidence sets in our analysis of PSRL to guarantee similar regret bounds with high probability over all MDP $M^*$.
+The algorithm follows the style of UCRL2 \cite{jaksch2010near} so that at the start of the $k$th episode the algorithm form $\Mc_k = \{M | P^M \in \Pc_k, R^M \in \Rc_k\}$ and then solves for the optimistic policy that attains the highest reward over any $M$ in $\Mc_k$.
+
+\begin{algorithm}[H]
+\caption{\protect\\ UCRL-Eluder}
+\label{alg: UCRL-Eluder}
+
+\begin{algorithmic}[1]
+    \State \textbf{Input: } Confidence parameter $\delta>0$, t=1
+    \For{episodes $k=1,2,..$}
+    \State{form confidence sets $\Rc_k(\beta^*(\Rc,\delta,1/k^2))$ and $\Pc_k(\beta^*(\Pc,\delta,1/k^2))$}
+    \State{compute $\mu_k$ optimistic policy over $\Mc_k = \{M | P^M \in \Pc_k, R^M \in \Rc_k\}$}
+	    \For{timesteps $j=1,..,\tau$} 
+	        \State{apply $a_t \sim \mu_k(s_t,j)$}
+	        \State{observe $r_t$ and $s_{t+1}$}
+	        \State{advance $t=t+1$}
+	    \EndFor
+	\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+Generally, step 4 of this algorithm with not be computationally tractable even when solving for $\mu^M$ is possible for a given $M$.
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+\end{document}
+
+
+
+

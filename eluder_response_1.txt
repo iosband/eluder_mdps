@@ -1,0 +1,14 @@
+Thank you very much for your feedback, we will try to deal with the main points in review.
+
+1. Paper clarity
+**************************************
+The main feedback seems to be that the paper is not easy to follow. After some time away from writing the paper we agree with the reviewers that we did not succeed in making the paper as clear or accessible as we would have liked. We intend to seriously refactor the paper to make the message and intuition more clear and move some of the more technical or tedious analysis to the appendix.
+
+2. Simulation
+**************************************
+We considered adding simulation results for our algorithms, but did not include them for two reasons. First, we found that in classic linear quadratic control it was very hard to get any learning algorithm that would outperform a simple certain equaivalent policy (for which there are no guarantees). Second, in this theoretical paper with tight page constraints we thought that it might further clutter the message. However, we do agree that some simulation results might be a nice addition to the paper which we should revisit and potentially include as part of our final revision.
+
+3. Discussion of related work
+**************************************
+We should have included a discussion of KWIK-Rmax in our paper, which deals with a similar problem setting and this was an oversight on our part. However, we believe that our analysis is more general than KWIK-Rmax rather than less. It is our understanding that KWIK-Rmax requires that the state transitions be linear in some kernel representation, which we believe our analysis would cover given knowledge of that kernel. Although we must represent the state in an L2-space, this should not really restrict our analysis. For example, as we show in the paper, we can deal with discrete spaces {1,..,n} (which are not L2) via an embedding in in the L2 space [0,1]^n.
+
