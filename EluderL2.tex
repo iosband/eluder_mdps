@@ -108,7 +108,7 @@ Stanford University \\
 We consider the problem of learning to optimize an unknown Markov decision process (MDP).
 We show that, if the MDP can be parameterized within some known function class, we can obtain regret bounds that scale with the dimensionality, rather than cardinality, of the system.
 We characterize this dependence explicitly as $\tilde{O}(\sqrt{d_K d_E T})$ where $T$ is time elapsed, $d_K$ is the Kolmogorov dimension and $d_E$ is the \emph{eluder dimension}.
-This represents the first unified regret bounds for model-based reinforcement learning and provides state of the art guarantees in several important settings.
+These represents the first unified regret bounds for model-based reinforcement learning and provides state of the art guarantees in several important settings.
 Moreover, we present a simple and computationally efficient algorithm \emph{posterior sampling for reinforcement learning} (PSRL) that satisfies these bounds.
 
 \end{abstract}
@@ -127,7 +127,7 @@ There are numerous criteria for statistical and computational efficiency that mi
 Some of the most common include PAC (Probably Approximately Correct) \cite{valiant1984theory}, MB (Mistake Bound) \cite{littlestone1988learning}, KWIK (Knows What It Knows) \cite{li2011knows} and regret \cite{jaksch2010near}.
 We will focus our attention upon regret, or the shortfall in the agent's expected rewards compared to that of the optimal policy.
 We believe this is the most natural guarantee for performance during learning, although these concepts are closely linked.
-A good overview of various efficiency guarantees is given in section 3 of \cite{li2011knows}.
+A good overview of various efficiency guarantees is given in section 3 of Li et al. \cite{li2011knows}.
 
 % Plan for the rest:
 % - Model-based vs Model-free, we only get good regret bounds with model-based.
@@ -137,21 +137,20 @@ A good overview of various efficiency guarantees is given in section 3 of \cite{
 
 Broadly these algorithms can be separated as either model-based, which build a generative model of the environment, or model-free which do not.
 Algorithms of both type have been developed to provide PAC-MDP bounds polynomial in the number of states $S$ and actions $A$ \cite{kearns2002near,brafman2003r,strehl2006pac}.
-However, model-free approaches often struggle to plan efficient exploration. so that currently the most efficient regret bounds are given by model-based approaches.
-The strongest results establish algorithms with bounds on the cumulative regret at time $T$, $\tilde{O}(S\sqrt{AT})$ close to the lower bound $\Omega(\sqrt{SAT})$ \cite{jaksch2010near,osband2013more}.
+However, model-free approaches often struggle to plan efficient exploration. so that the state of the art bounds on the regret to time $T$ of $\tilde{O}(S\sqrt{AT})$ have only been attained by model-based algorithms \cite{jaksch2010near,osband2013more}.
+The problem is that these bounds grow with the cardinality of the state and action spaces, which may be extremely large or even infinite.
+Worse still, there is a lower bound $\Omega ( \sqrt{SAT} )$ \cite{jaksch2010near} for the expected regret in general MDPs.
 
-The problem with this \emph{tabula rasa} setting is that MDP complexity grows with cardinality of the underlying state and action spaces; in many settings of interest this may be extremely large, or even infinite.
-The standard approach to this problem is some discretization scheme with degradation to performance though imprecision, but this falls victim to the curse of dimensionality.
-To achieve efficiency results that can exploit MDP structure, the existing literature usually presents algorithms tailored to some specific families of $\Rc$ and $\Pc$.
-
+In special cases, where the reward or transition function is known to belong to a certain functional family, existing algorithms can exploit the structure to give tighter bounds.
 The most widely-studied parameterization is the degenerate MDP with no transitions, the mutli-armed bandit \cite{auer2003using,bubeck2011xarmed,russo2013}.
+Others have considered factored MDPs, where the transition function exhibits some conditional independence structure \cite{osband2014near}.
 Another common assumption is that the transition function is linear in states and actions.
-Papers here have established sample complexity \cite{strehl2007online} and even regret bounds $\tilde{O}(\sqrt{T})$ for linear quadratic control \cite{abbasi2011improved}, but with constants that grow exponentially with dimension.
+Papers here establigh regret bounds $\tilde{O}(\sqrt{T})$ for linear quadratic control \cite{abbasi2011improved}, but with constants that grow exponentially with dimension.
 Later works remove this exponential dependence, but only under significant sparsity assumptions \cite{ibrahimi2012efficient}.
 The most general previous analysis considers rewards and transitions that are $\alpha$-H\"{o}lder in a $d$-dimensional space to establish regret bounds $\tilde{O}(T^{(2d+\alpha)/(2d+2\alpha)})$ \cite{ortner2012online}.
 However, the proposed algorithm UCCRL is not computationally tractable and the bounds approach linearity in many settings.
 
-We present the first regret bounds for learning in a general MDP with rewards in $\Rc$ and transitions in $\Pc$ in terms of the dimensionality, rather than the cardinality, of the MDP.
+In this paper we present the first regret bounds for learning in a general MDP with rewards and transitions drawn from function families in terms of the dimensionality, rather than the cardinality, of the MDP.
 To characterize the complexity of this learning problem we extend the definition of the eluder dimension, previously introduced for bandits, to capture the interedependence between state-action pairs \cite{russo2013eluder}.
 Our results provide a unified analysis of model-based reinforcement learning and provide new state of the art bounds in several important problem settings.
 What is more, these bounds are satisfied by one simple and intuitive algorithm \emph{posterior sampling for reinforcement learning} (PSRL) \cite{thompson1933,strens2000bayesian,osband2013more} across all problem settings.
@@ -240,6 +239,7 @@ For the family $\Fc$ let $N(\Fc,\alpha,\|\cdot\|_2)$ be the $\alpha$-covering nu
 Finally we  write $d_\Fc = {\rm dim}_E(\Fc,T^{-1})$ for the eluder dimension of $\Fc$ at precision $T^{-1}$, a notion of dimension specialized to sequential measurements described in Section \ref{sec: eluder}.
 
 Our main result, Theorem \ref{thm: main regret}, bounds the expected regret of PSRL at any time $T$.
+
 \begin{theorem}[Expected regret for PSRL in parameterized MDPs]
 \label{thm: main regret} \hspace{0.00000000000001mm} \newline
 Let $M^*$ be an MDP with state space $\Sc$, action space $\Ac$, rewards $R^* \in \Rc \subseteq \Pc^{C_\Rc,\sigma_\Rc}_{\Sc \times \Ac,\Real}$ and transitions $P^* \in \Pc \subseteq \Pc^{C_\Pc,\sigma_\Pc}_{\Sc \times \Ac,\Sc}$ for any $C_\Rc, C_\Pc, \sigma_\Rc, \sigma_\Pc >0 $.
@@ -255,13 +255,12 @@ If $\phi$ is the distribution of $M^*$ and $K^*$ is a global Lipschitz constant 
 \end{eqnarray}
 \end{theorem}
 
-To clarify the assymptotic dependence of this bound we will make use of another classic measure of dimensionality, the Kolmogorov dimension of a function class $\Fc$, ${\rm dim}_K(\Fc)$.
-Using this definition \ref{def: kol} in Theorem \ref{thm: main regret} we can obtain our Corollary.
+To clarify the assymptotic dependence of this bound we will make use of another classic measure of dimensionality, the Kolmogorov dimension of a function class $\Fc$, ${\rm dim}_K(\Fc)$, which we reproduce in this paper by Definition \ref{def: kol}.
+Using this definition in Theorem \ref{thm: main regret} we can obtain our Corollary.
 
 \begin{corollary}[Assymptotic regret bounds for PSRL in parameterized MDPs]
 \label{cor: ass regret} \hspace{0.00000000000001mm} \newline
-Let $M^*$ be an MDP with state space $\Sc$, action space $\Ac$, rewards $R^* \in \Rc \subseteq \Pc^{C_\Rc,\sigma_\Rc}_{\Sc \times \Ac,\Real}$ and transitions $P^* \in \Pc \subseteq \Pc^{C_\Pc,\sigma_\Pc}_{\Sc \times \Ac,\Sc}$ for any $C_\Rc, C_\Pc, \sigma_\Rc, \sigma_\Pc >0 $.
-If $\phi$ is the distribution of $M^*$ and $K^*$ is a global Lipschitz constant for the future value function then:
+Under the assumptions of Theorem \ref{thm: main regret}:
 \begin{equation}
 	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] = \tilde{O} \left( \ \sigma_\Rc \sqrt{{\rm dim}_K(\Rc) {\rm dim}_E(\Rc,T^{-1}) T}
 		+ \Exp[K^*] \sigma_\Pc \sqrt{{\rm dim}_K(\Pc) {\rm dim}_E(\Pc,T^{-1}) T} \ \right)
@@ -272,9 +271,10 @@ Where $\tilde{O}(\cdot)$ ignores terms logarithmic in $T$.
 Using the bounds on eluder dimension given in Section \ref{sec: eluder} we can provide concrete regret bounds in a number of canonical domains such as discrete MDPs, linear-quadratic control and even generalized linear systems.
 In all of these cases the eluder dimension scales comparably with more traditional notions of dimensionality.
 For clarity, we present bounds in the case of linear-quadratic control.
+
 \begin{corollary}[Assymptotic regret bounds for PSRL in linear quadratic systems]
 \label{cor: LQR} \hspace{0.00000000000001mm} \newline
-Let $M^*$ be a linear-quadratic system with $n-dimensional$ states and actions $\|\cdot\|_2$-bounded in $[0,C]$ and $\sigma$-sub-Gaussian noise.
+Let $M^*$ be a linear-quadratic system with $n$-dimensional states and actions $\|\cdot\|_2$-bounded in $[0,C]$ and $\sigma$-sub-Gaussian noise.
 If $\phi$ is the distribution of $M^*$, then:
 \begin{equation}
 	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] = \tilde{O} \left( \sigma C \lambda_1 n^2 \sqrt{T} \ \right)
@@ -285,8 +285,9 @@ We simply apply the results of for eluder dimension in Section \ref{sec: eluder}
 \end{proof}
 \end{corollary}
 
-We note that it would also be possible to use the analysis in this paper to formally present an optimistic algorithm that satisfied similar regret bounds with high probability.
-We do not present these proofs in this paper to simplify the discussion, but also because the resultant algorithm UCRL-Eluder, outlined in Appendix \ref{app: UCRL-Eluder} would be computationally intractable even when presented with an approximate MDP planner.
+Algorithms based upon posterior sampling are intimately linked to those based upon optimism \cite{russo2013}.
+In Appendix \ref{app: UCRL-Eluder} we outline an optimistic variant that would attain similar regret bounds but with high probility in a frequentist sense.
+Unfortunately this algorithm remains computationally intractable even when presented with an approximate MDP planner.
 Further, we believe that PSRL will generally be more statistically efficient than an optimistic variant with similar regret bounds since the algorithm is not affected by loose analysis \cite{osband2013more}.
 
 
@@ -295,9 +296,9 @@ Further, we believe that PSRL will generally be more statistically efficient tha
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 \section{Eluder dimension}
 \label{sec: eluder}
-We extend the existing notion of eluder dimension for real-valued functions \cite{russo2013eluder} to any $L^2$ space.
-For any $\Gc \subseteq \Pc^{C,\sigma}_{\Xc,\Yc}$ we define $\Fc = \Exp[\Gc] := \{f | f=\Exp[G] \text{ for } G \in \Gc \}$.
-We consider sequential observations $y_i \sim G^*(x_i)$ which can equivalently be written $y_i = f^*(x_i) + \epsilon_i$ for $f^*(x_i) = \Exp[G^*(x_i)]$.
+To quantify the complexity of learning in a potentially infinite MDP, we extend the existing notion of eluder dimension for real-valued functions \cite{russo2013eluder} to vector-valued functions.
+For any $\Gc \subseteq \Pc^{C,\sigma}_{\Xc,\Yc}$ we define the set of mean functions $\Fc = \Exp[\Gc] := \{f | f=\Exp[G] \text{ for } G \in \Gc \}$.
+If we consider sequential observations $y_i \sim G^*(x_i)$ we can equivalently write them as $y_i = f^*(x_i) + \epsilon_i$ for some $f^*(x_i) = \Exp[y | y \sim G^*(x_i)]$ and $\epsilon_i$ zero mean noise.
 Intuitively, the eluder dimension of $\Fc$ is the length $d$ of the longest possible sequence $x_1,..,x_d$ such that for all $i$, knowing the function values of $f(x_1),..,f(x_i)$ will not reveal $f(x_{i+1})$.
 
 \begin{mydef}[$ (\mathcal{F},\epsilon)-dependence$]
@@ -313,18 +314,17 @@ The eluder dimension ${\rm dim}_E(\Fc,\epsilon)$ is the length of the longest po
 \end{mydef}
 
 Traditional notions from supervised learning, such as the VC dimension, are not sufficient to characterize the complexity of reinforcement learning.
-In fact, a family learnable in constant time for supervised learning may require arbitrarily long to learn to optimize \cite{russo2013eluder}.
-The Eluder dimension mirrors the linear dimension for vector spaces, which is the length of the longest sequence such that each element is linearly independent of its predecessors.
-We extend this notion of complexity to account for nonlinear and approximate dependencies.
-We overload our notation to write ${\rm dim}_E(\Gc,\epsilon) := {\rm dim}_E(\Exp[\Gc],\epsilon)$ whenever $\Gc \subseteq \Pc^{C,\sigma}_{\Xc,\Yc}$, which should be clear from the context.
+In fact, a family learnable in constant time for supervised learning may require arbitrarily long to learn to control well \cite{russo2013eluder}.
+The eluder dimension mirrors the linear dimension for vector spaces, which is the length of the longest sequence such that each element is linearly independent of its predecessors, but allows for nonlinear and approximate dependencies.
+We overload our notation for $\Gc \subseteq \Pc^{C,\sigma}_{\Xc,\Yc}$ and write ${\rm dim}_E(\Gc,\epsilon) := {\rm dim}_E(\Exp[\Gc],\epsilon)$, which should be clear from the context.
 
 
 
 %--------------------------------------------------------------------------------------------------------
 \subsection{Eluder dimension for specific function classes}
-The eluder dimension is well-defined and straightforward notion for any $\Fc, \epsilon$.
-However, given $\Fc,\epsilon$ calculating the eluder dimension may take some additional analysis.
-We now provide bounds on the eluder dimension for some common function classes in a similar approach to earlier work \cite{russo2013}.
+Theorem \ref{thm: main regret} gives regret bounds in terms of the eluder dimension, which is well-defined for any $\Fc, \epsilon$.
+However, for any given $\Fc,\epsilon$ actually calculating the eluder dimension may take some additional analysis.
+We now provide bounds on the eluder dimension for some common function classes in a similar approach to earlier work for real-valued functions \cite{russo2013}.
 These proofs are available in Appendix \ref{app: eluder dims}.
 
 \begin{prop}[Eluder dimension for finite $\mathcal{X}$]
@@ -366,9 +366,11 @@ $${\rm dim}_E(\Fc, \epsilon) \le p \left(r^2(4n-2)+1\right)\frac{e}{e-1} \left(\
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 \section{Confidence sets}
 \label{sec: conf}
-We will now build confidence sets which contain the true function $f^*$ with high probability.
-The confidence sets are centered around the least squares estimate $\hat{f}_t^{LS} \in \arg \min_{f \in \Fc} L_{2,t}(f)$ where $L_{2,t}(f) := \sum_{i=1}^{t-1} \|f(x_t) - y_t \|^2_2$ is the cumulative squared prediciton error.
-The confidence sets are defined $\Fc_t = \Fc_t(\beta_t) := \{ f \in \Fc | \| f-\hat{f}_t^{LS} \|_{2,E_t} \le \sqrt{\beta_t} \}$ where $\beta_t$ is a parameter which controls the growth of the confidence set and the empirical 2-norm is defined $\|g\|_{2,E_t}^2 := \sum_{i=1}^{t-1} \|g(x_i)\|_2^2$.
+We now follow the standard argument that relates the regret of an optimistic or posterior sampling algorithm to the construction of confidence sets \cite{jaksch2010near,osband2013more}.
+To do this we will use the eluder dimension build confidence sets for the reward and transition which contain the true functions with high probability.
+We will then bound the regret of our algorithm by the maximum deviation within the confidence sets.
+For observations from $f^* \in \Fc$ we will center the sets around the least squares estimate $\hat{f}_t^{LS} \in \arg \min_{f \in \Fc} L_{2,t}(f)$ where $L_{2,t}(f) := \sum_{i=1}^{t-1} \|f(x_t) - y_t \|^2_2$ is the cumulative squared prediciton error.
+The confidence sets are defined $\Fc_t = \Fc_t(\beta_t) := \{ f \in \Fc | \| f-\hat{f}_t^{LS} \|_{2,E_t} \le \sqrt{\beta_t} \}$ where $\beta_t$ controls the growth of the confidence set and the empirical 2-norm is defined $\|g\|_{2,E_t}^2 := \sum_{i=1}^{t-1} \|g(x_i)\|_2^2$.
 
 % In order to provide guarantees in a general setting we will make two simplifying assumptions on the function family $\Fc$.
 % We require that the mean value of $f$ is bounded and that the noise is in some sense light-tailed.
@@ -393,7 +395,7 @@ For all $\delta>0$ and $\alpha >0$ and the confidence sets $\Fc_t = \Fc_t(\beta^
 $$\Prob \left( f^* \in \bigcap_{t=1}^\infty \Fc_t \right) \ge 1-2\delta $$
 \begin{proof}
 We combine standard martingale concentrations with a discretization scheme.
-The argument is essentially the same as Proposition 6 in \cite{russo2013}, but replaces statements about $\Real$ with more general $L^2$ properties.
+The argument is essentially the same as Proposition 6 in \cite{russo2013}, but extends statements about $\Real$ to vector-valued functions.
 A full derivation is available in the Appendix \ref{app: conf sets}.
 \end{proof}
 \end{prop}
@@ -427,7 +429,7 @@ We now use Lemma \ref{lem: big widths} to control the cumulative deviation throu
 \begin{prop}[Bounding the sum of widths]
 \hspace{0.00000000000001mm} \newline
 \label{prop: widths}
-If $\{ \beta_t >0 \big| t \in \Nat \}$ is a nondecreasing sequence with $\Fc_t = \Fc_t(\beta_t)$ and $\|f\|_2 \le C$ for all $f \in \Fc$ then:
+If $\{ \beta_t >0 \big| t \in \Nat \}$ is nondecreasing with $\Fc_t = \Fc_t(\beta_t)$ and $\|f\|_2 \le C$ for all $f \in \Fc$ then:
 \begin{equation}
 	\sum_{k=1}^m \sum_{i=1}^\tau w_{\Fc_{t_k}}(x_{t_k+i}) \le
 	1 + \tau C {\rm dim}_E(\Fc,T^{-1}) + 4\sqrt{\beta_T {\rm dim}_E(\Fc,T^{-1}) T}
@@ -454,7 +456,7 @@ $$\sum_{i=1}^T w_{i_t} \Ind \{ w_{i_t} \ge T^{-1} \} \le \tau C d + \sum_{t=\tau
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 \section{Analysis}
-We will now follow the familiar line of argument that relates the regret of an optimistic or posterior sampling algorithm to the Bellman error \cite{jaksch2010near,osband2013more}.
+We will now show that the expected regret can be decomposed in terms of the expected Bellman error, which will allow us to apply the general confidence set results from Section \ref{sec: conf}.
 We streamline our discussion of $P^{M}, R^{M}, V^{M}_{\mu,i}, U^{M}_{i}$ and $\Tc^M_\mu$ by simply writing $*$ in place of $M^*$ or $\mu^*$ and $k$ in place of $M_k$ or $\mu_k$ where appropriate; for example $V^*_{k,i} := V^{M^*}_{\tilde{\mu}_k,i}$.
 
 The first step breaks down the regret by adding and subtracting the \emph{imagined} optimal reward of $\mu_k$ under the MDP $M_k$.
