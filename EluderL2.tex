@@ -367,19 +367,9 @@ $${\rm dim}_E(\Fc, \epsilon) \le p \left(r^2(4n-2)+1\right)\frac{e}{e-1} \left(\
 \section{Confidence sets}
 \label{sec: conf}
 We now follow the standard argument that relates the regret of an optimistic or posterior sampling algorithm to the construction of confidence sets \cite{jaksch2010near,osband2013more}.
-To do this we will use the eluder dimension build confidence sets for the reward and transition which contain the true functions with high probability.
-We will then bound the regret of our algorithm by the maximum deviation within the confidence sets.
+We will use the eluder dimension build confidence sets for the reward and transition which contain the true functions with high probability and then bound the regret of our algorithm by the maximum deviation within the confidence sets.
 For observations from $f^* \in \Fc$ we will center the sets around the least squares estimate $\hat{f}_t^{LS} \in \arg \min_{f \in \Fc} L_{2,t}(f)$ where $L_{2,t}(f) := \sum_{i=1}^{t-1} \|f(x_t) - y_t \|^2_2$ is the cumulative squared prediciton error.
 The confidence sets are defined $\Fc_t = \Fc_t(\beta_t) := \{ f \in \Fc | \| f-\hat{f}_t^{LS} \|_{2,E_t} \le \sqrt{\beta_t} \}$ where $\beta_t$ controls the growth of the confidence set and the empirical 2-norm is defined $\|g\|_{2,E_t}^2 := \sum_{i=1}^{t-1} \|g(x_i)\|_2^2$.
-
-% In order to provide guarantees in a general setting we will make two simplifying assumptions on the function family $\Fc$.
-% We require that the mean value of $f$ is bounded and that the noise is in some sense light-tailed.
-% \begin{assumption}[Boundedness]
-% For all $f \in \Fc$ and $x \in \Xc$, $\|f(x)\|_2 \le C$
-% \end{assumption}
-% \begin{assumption}[Sub Gaussian noise]
-% For all $t \in \Nat$, $y_t - f^*(x_t)$ conditioned on $(H_t,f^*,x_t)$ is $\sigma$-sub Gaussian.
-% \end{assumption}
 
 For $\Fc \subseteq \Pc^{C,\sigma}_{\Xc,\Yc}$, we define the control parameter:
 \begin{equation}
@@ -456,7 +446,7 @@ $$\sum_{i=1}^T w_{i_t} \Ind \{ w_{i_t} \ge T^{-1} \} \le \tau C d + \sum_{t=\tau
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 \section{Analysis}
-We will now show that the expected regret can be decomposed in terms of the expected Bellman error, which will allow us to apply the general confidence set results from Section \ref{sec: conf}.
+We will now show that the expected regret can be decomposed in terms of the Bellman error, which will allow us to apply the general confidence set results from Section \ref{sec: conf}.
 We streamline our discussion of $P^{M}, R^{M}, V^{M}_{\mu,i}, U^{M}_{i}$ and $\Tc^M_\mu$ by simply writing $*$ in place of $M^*$ or $\mu^*$ and $k$ in place of $M_k$ or $\mu_k$ where appropriate; for example $V^*_{k,i} := V^{M^*}_{\tilde{\mu}_k,i}$.
 
 The first step breaks down the regret by adding and subtracting the \emph{imagined} optimal reward of $\mu_k$ under the MDP $M_k$.
@@ -465,7 +455,7 @@ The first step breaks down the regret by adding and subtracting the \emph{imagin
 	= \left( V^*_{*,1} - V^k_{k,1} \right)(s_0) + \left( V^k_{k,1} - V^*_{k,1} \right)(s_0)
 \end{equation}
 Here $s_0$ is a distinguished initial state, but moving to general $\rho(s)$ poses no real challenge.
-Algorithms based upon optimism bound $\left( V^*_{*,1} - V^k_{k,1} \right) \le 0$ with high probability.
+Algorithms based upon optimism bound $( V^*_{*,1} - V^k_{k,1} ) \le 0$ with high probability.
 For PSRL we use Lemma \ref{lem: ps} and the tower property to see that this is zero in expectation.
 \begin{lemma}[Posterior sampling]
 \label{lem: ps}
@@ -502,9 +492,8 @@ Through repeated application of the dynamic programming operator and taking expe
 \label{sec: lipschitz}
 Efficient regret bounds for MDPs with an infinite number of states and actions require some regularity assumption.
 One natural notion is that nearby states might have similar optimal values, or that the optimal value function function might be Lipschitz.
-However, any discontinuous reward function will usually lead to discontious values functions so that this assumption is violated in many settings of interest.
-
-Instead we supose that the \emph{future} value is Lipschitz in the sense of equation \eqref{eq: future Lipschitz}.
+Unfortunately, any discontinuous reward function will usually lead to discontious values functions so that this assumption is violated in many settings of interest.
+However, we only require that the \emph{future} value is Lipschitz in the sense of equation \eqref{eq: future Lipschitz}.
 This will will be satisfied whenever the underlying value function is Lipschitz, but is a strictly weaker requirement since the system noise helps to smooth future values.
 
 Since $\Pc$ has $\sigma_P$-sub-Gaussian noise we write $s_{t+1} = \overline{p}^M(s_t,a_t)+\epsilon^P_t$ in the natural way.
