@@ -108,7 +108,7 @@ Stanford University \\
 We consider the problem of learning to optimize an unknown Markov decision process (MDP).
 We show that, if the MDP can be parameterized within some known function class, we can obtain regret bounds that scale with the dimensionality, rather than cardinality, of the system.
 We characterize this dependence explicitly as $\tilde{O}(\sqrt{d_K d_E T})$ where $T$ is time elapsed, $d_K$ is the Kolmogorov dimension and $d_E$ is the \emph{eluder dimension}.
-These represents the first unified regret bounds for model-based reinforcement learning and provides state of the art guarantees in several important settings.
+These represent the first unified regret bounds for model-based reinforcement learning and provide state of the art guarantees in several important settings.
 Moreover, we present a simple and computationally efficient algorithm \emph{posterior sampling for reinforcement learning} (PSRL) that satisfies these bounds.
 
 \end{abstract}
@@ -117,16 +117,16 @@ Moreover, we present a simple and computationally efficient algorithm \emph{post
 %--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 \section{Introduction}
 
-We consider the reinforcement learning problem of optimizing rewards in an unknown Markov decision process (MDP) \cite{burnetas1997optimal}.
+We consider the reinforcement learning (RL) problem of optimizing rewards in an unknown Markov decision process (MDP) \cite{burnetas1997optimal}.
 In this setting an agent makes sequential decisions within its enironment to maximize its cumulative rewards through time.
-We model the environment as an MDP, however, unlike the standard MDP planning problem the agent is initially unsure of the underlying reward and transition functions.
+We model the environment as an MDP, however, unlike the standard MDP planning problem the agent is unsure of the underlying reward and transition functions.
 Through exploring poorly-understood policies, an agent may improve its understanding of its environment but it may improve its short term rewards by exploiting its existing knowledge \cite{lai1985asymptotically,kaelbling1996reinforcement}.
 
 The focus of the literature in this area has been to develop algorithms whose performance will be close to optimal in some sense.
 There are numerous criteria for statistical and computational efficiency that might be considered.
 Some of the most common include PAC (Probably Approximately Correct) \cite{valiant1984theory}, MB (Mistake Bound) \cite{littlestone1988learning}, KWIK (Knows What It Knows) \cite{li2011knows} and regret \cite{jaksch2010near}.
 We will focus our attention upon regret, or the shortfall in the agent's expected rewards compared to that of the optimal policy.
-We believe this is the most natural guarantee for performance during learning, although these concepts are closely linked.
+We believe this is a natural criteria for performance during learning, although these concepts are closely linked.
 A good overview of various efficiency guarantees is given in section 3 of Li et al. \cite{li2011knows}.
 
 % Plan for the rest:
@@ -135,26 +135,25 @@ A good overview of various efficiency guarantees is given in section 3 of Li et 
 % - People have looked at special settings --> move beyond these limits.
 % - Simple general algorithm PSRL and capture complexity in terms of the Eluder dimension
 
-Broadly these algorithms can be separated as either model-based, which build a generative model of the environment, or model-free which do not.
+Broadly, algorithms for RL can be separated as either model-based, which build a generative model of the environment, or model-free which do not.
 Algorithms of both type have been developed to provide PAC-MDP bounds polynomial in the number of states $S$ and actions $A$ \cite{kearns2002near,brafman2003r,strehl2006pac}.
-However, model-free approaches often struggle to plan efficient exploration. so that the state of the art bounds on the regret to time $T$ of $\tilde{O}(S\sqrt{AT})$ have only been attained by model-based algorithms \cite{jaksch2010near,osband2013more}.
-The problem is that these bounds grow with the cardinality of the state and action spaces, which may be extremely large or even infinite.
-Worse still, there is a lower bound $\Omega ( \sqrt{SAT} )$ \cite{jaksch2010near} for the expected regret in general MDPs.
+However, model-free approaches often struggle to plan efficient exploration so that the state of the art bounds on the regret to time $T$ of $\tilde{O}(S\sqrt{AT})$ have only been attained by model-based algorithms \cite{jaksch2010near,osband2013more}.
+But even these bounds grow with the cardinality of the state and action spaces, which may be extremely large or even infinite.
+Worse still, there is a lower bound $\Omega ( \sqrt{SAT} )$ for the expected regret in an arbitrary MDP \cite{jaksch2010near}.
 
-In special cases, where the reward or transition function is known to belong to a certain functional family, existing algorithms can exploit the structure to give tighter bounds.
+In special cases, where the reward or transition function is known to belong to a certain functional family, existing algorithms can exploit the structure to move beyond this ```tabula rasa'' lower bound.
 The most widely-studied parameterization is the degenerate MDP with no transitions, the mutli-armed bandit \cite{auer2003using,bubeck2011xarmed,russo2013}.
-Others have considered factored MDPs, where the transition function exhibits some conditional independence structure \cite{osband2014near}.
 Another common assumption is that the transition function is linear in states and actions.
 Papers here establigh regret bounds $\tilde{O}(\sqrt{T})$ for linear quadratic control \cite{abbasi2011improved}, but with constants that grow exponentially with dimension.
 Later works remove this exponential dependence, but only under significant sparsity assumptions \cite{ibrahimi2012efficient}.
 The most general previous analysis considers rewards and transitions that are $\alpha$-H\"{o}lder in a $d$-dimensional space to establish regret bounds $\tilde{O}(T^{(2d+\alpha)/(2d+2\alpha)})$ \cite{ortner2012online}.
 However, the proposed algorithm UCCRL is not computationally tractable and the bounds approach linearity in many settings.
 
-In this paper we present the first regret bounds for learning in a general MDP with rewards and transitions drawn from function families in terms of the dimensionality, rather than the cardinality, of the MDP.
-To characterize the complexity of this learning problem we extend the definition of the eluder dimension, previously introduced for bandits, to capture the interedependence between state-action pairs \cite{russo2013eluder}.
-Our results provide a unified analysis of model-based reinforcement learning and provide new state of the art bounds in several important problem settings.
-What is more, these bounds are satisfied by one simple and intuitive algorithm \emph{posterior sampling for reinforcement learning} (PSRL) \cite{thompson1933,strens2000bayesian,osband2013more} across all problem settings.
-PSRL can naturally encode complex problem knowledge with computational complexity generally no greater than solving a single known MDP.
+In this paper we analyse the simple and intuitive algorithm \emph{posterior sampling for reinforcement learning} (PSRL) \cite{thompson1933,strens2000bayesian,osband2013more}.
+PSRL was initially introduced as a heuristic method \cite{strens2000bayesian}, but has since been shown to satisfy state of the art regret bounds in finite MDPs \cite{osband2013more} and also exploit the structure of factored MDPs    \cite{osband2014near}.
+We show that this same algorithm satisfies regret bounds that depends upon the dimensionality, rather than the cardinality, of the underlying reward and transition function classes.
+To characterize the complexity of this learning problem we extend the definition of the eluder dimension, previously introduced for bandits \cite{russo2013eluder}, to capture the complexity of the reinforcement learning problem.
+results provide a unified analysis of model-based reinforcement learning and provide new state of the art bounds in several important problem settings.
 
 
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -371,7 +370,7 @@ We will use the eluder dimension build confidence sets for the reward and transi
 For observations from $f^* \in \Fc$ we will center the sets around the least squares estimate $\hat{f}_t^{LS} \in \arg \min_{f \in \Fc} L_{2,t}(f)$ where $L_{2,t}(f) := \sum_{i=1}^{t-1} \|f(x_t) - y_t \|^2_2$ is the cumulative squared prediciton error.
 The confidence sets are defined $\Fc_t = \Fc_t(\beta_t) := \{ f \in \Fc | \| f-\hat{f}_t^{LS} \|_{2,E_t} \le \sqrt{\beta_t} \}$ where $\beta_t$ controls the growth of the confidence set and the empirical 2-norm is defined $\|g\|_{2,E_t}^2 := \sum_{i=1}^{t-1} \|g(x_i)\|_2^2$.
 
-For $\Fc \subseteq \Pc^{C,\sigma}_{\Xc,\Yc}$, we define the control parameter:
+For $\Fc \subseteq \Pc^{C,\sigma}_{\Xc,\Yc}$, we define the distinguished control parameter:
 \begin{equation}
 \label{eq: beta star}
 	\beta^*_t(\Fc,\delta,\alpha) := 8 \sigma^2 \log(N(\Fc,\alpha,\|\cdot\|_2)/\delta) +
@@ -446,10 +445,11 @@ $$\sum_{i=1}^T w_{i_t} \Ind \{ w_{i_t} \ge T^{-1} \} \le \tau C d + \sum_{t=\tau
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 \section{Analysis}
-We will now show that the expected regret can be decomposed in terms of the Bellman error, which will allow us to apply the general confidence set results from Section \ref{sec: conf}.
+We will now show reproduce the decomposition of expected regret in terms of the Bellman error \cite{osband2013more}.
+From here, we will apply the confidence set results from Section \ref{sec: conf} to obtain our regret bounds.
 We streamline our discussion of $P^{M}, R^{M}, V^{M}_{\mu,i}, U^{M}_{i}$ and $\Tc^M_\mu$ by simply writing $*$ in place of $M^*$ or $\mu^*$ and $k$ in place of $M_k$ or $\mu_k$ where appropriate; for example $V^*_{k,i} := V^{M^*}_{\tilde{\mu}_k,i}$.
 
-The first step breaks down the regret by adding and subtracting the \emph{imagined} optimal reward of $\mu_k$ under the MDP $M_k$.
+The first step in our ananlysis breaks down the regret by adding and subtracting the \emph{imagined} optimal reward of $\mu_k$ under the MDP $M_k$.
 \begin{equation}
 	\Delta_k = \left( V^*_{*,1} - V^*_{k,1} \right)(s_0)
 	= \left( V^*_{*,1} - V^k_{k,1} \right)(s_0) + \left( V^k_{k,1} - V^*_{k,1} \right)(s_0)
@@ -519,7 +519,7 @@ Let $A = \{R^*, R_k \in \Rc_k \ \forall k \}$ and $B = \{P^*,P_k \in \Pc_k \ \fo
 	&\le& \sum_{k=1}^m \sum_{i=1}^\tau \left\{ w_{\Rc_k}(x_{k,i}) +
 		 \Exp[K^k|A,B] w_{\Pc_k}(x_{k,i}) + 8 \delta (C_\Rc + C_\Pc) \right\}
 \end{eqnarray}
-Posterior sampling ensures that $\Exp[K^k] = \Exp[K^*]$ so that
+The posterior sampling lemma ensures that $\Exp[K^k] = \Exp[K^*]$ so that
 $\Exp[K^k|A,B] \le \frac{\Exp[K^*]}{\Prob(A,B)} \le \frac{\Exp[K^*]}{1-8\delta}$
 by a union bound on $\{A^c \cup B^c\}$.
 We fix $\delta = 1/8T$ to see that:
@@ -555,14 +555,15 @@ Using this definition together with $n_\Rc,n_\Pc$ we complete our proof of Corol
 
 
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-\section{Conclusions}
-We present the first unified analysis for model-based reinforcement in terms of the dimensionality of the function classes of rewards $\Rc$ and transitions $\Pc$.
-What is more, we show that the simple and computationally efficient algorithm PSRL satisfies these bounds.
-Our results provide new state of the guarantees when specialized to several important problem settings but in others, such as factored MDPs, alternative analysis can produce tighter bounds even for the same algorithm \cite{osband2014near}.
-We also wonder whether it is possible to extend our analysis to learning in MDPs without episodic resets.
-However, there is a more fundamental quagmire for model-based reinforcement learning in complex systems that even solving for the optimal policy in a \emph{known} MDP may be intractable.
-In future work, we would like to examine whether it is possible to attain similar regret bounds with a model-free algorithm when the optimal value function $V^*$ lies in $\mathcal{V}$ \cite{van2014generalization}.
-
+\section{Conclusion}
+We present a new analysis of \emph{posterior sampling for reinforcement learning} that leads to a general regret bound in terms of the dimensionality, rather than the cardinality, of the underlying MDP.
+These are the first regret bounds for reinforcement learning in such a general setting and provide new state of the art guarantees when specialized to several important problem settings.
+That said, there are a few clear shortcomings which we do not address in the paper.
+First, we assume that it is possible to draw samples from the posterior distribution exactly and in some cases this may require extensive computational effort.
+Second, we wonder whether it is possible to extend our analysis to learning in MDPs without episodic resets.
+Finally, there is a fundamental hurdle to model-based reinforcement learning that planning for the optimal policy even in a \emph{known} MDP may be intractable.
+We assume access to an approximate MDP planner, but this will generally require lengthy computations.
+We would like to examine whether similar bounds are attainable in model-free learning \cite{van2014generalization}, which may obviate complicated MDP planning, and examine the computational and statistical efficiency tradeoffs between these methods.
 
 
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

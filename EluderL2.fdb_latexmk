@@ -1,13 +1,13 @@
 # Fdb version 3
-["bibtex EluderL2"] 1412909293 "EluderL2.aux" "EluderL2.bbl" "EluderL2" 1412911720
+["bibtex EluderL2"] 1412968167 "EluderL2.aux" "EluderL2.bbl" "EluderL2" 1412968169
   "/usr/local/texlive/2013/texmf-dist/bibtex/bst/base/unsrt.bst" 1292289607 18030 1376b4b231b50c66211e47e42eda2875 ""
-  "EluderL2.aux" 1412911719 3161 72ac14d013ef84a8bf76c0d84878b574 ""
+  "EluderL2.aux" 1412968168 3282 2faf7135219a4f2b98b088bfca000e7b ""
   "EluderL2.bcf" 0 -1 0 ""
   "referenceInformation.bib.bib" 0 -1 0 ""
   (generated)
   "EluderL2.blg"
   "EluderL2.bbl"
-["pdflatex"] 1412911718 "EluderL2.tex" "EluderL2.pdf" "EluderL2" 1412911720
+["pdflatex"] 1412968167 "EluderL2.tex" "EluderL2.pdf" "EluderL2" 1412968169
   "/usr/local/texlive/2013/texmf-dist/tex/context/base/supp-pdf.mkii" 1337017135 71627 94eb9990bed73c364d7f53f960cc8c5b ""
   "/usr/local/texlive/2013/texmf-dist/tex/generic/oberdiek/atbegshi.sty" 1335995445 24460 92f559a71aac869021852c227c704b38 ""
   "/usr/local/texlive/2013/texmf-dist/tex/generic/oberdiek/etexcmds.sty" 1335995445 7612 c47308d923ec19888707b0f1792b326a ""
@@ -72,9 +72,9 @@
   "/usr/local/texlive/2013/texmf-dist/tex/latex/wasysym/uwasy.fd" 1137111081 2127 de456b4fb7b20e6651c727c9fdc94803 ""
   "/usr/local/texlive/2013/texmf-dist/tex/latex/wasysym/wasysym.sty" 1137111081 10611 eca9e56dd071530be0c56f0b968bbdb6 ""
   "/usr/local/texlive/2013/texmf-dist/tex/latex/xcolor/xcolor.sty" 1169481954 55224 a43bab84e0ac5e6efcaf9a98bde73a94 ""
-  "EluderL2.aux" 1412911719 3161 72ac14d013ef84a8bf76c0d84878b574 ""
-  "EluderL2.bbl" 1402077458 4421 b85743a40fccd6158eb220bdd024d69e "bibtex EluderL2"
-  "EluderL2.tex" 1412911718 60730 434f6ffc3b754f78737e5654df7ed3d8 ""
+  "EluderL2.aux" 1412968168 3282 2faf7135219a4f2b98b088bfca000e7b ""
+  "EluderL2.bbl" 1412911808 4799 73d7be29195b936d49e822b251cc792d "bibtex EluderL2"
+  "EluderL2.tex" 1412968164 60962 0d596168abe5e6978eb195c8c4ee3d33 ""
   "nips14submit_e.sty" 1400363377 8803 4be3f7745104c21ca95f608f0c9c0910 ""
   (generated)
   "EluderL2.pdf"
