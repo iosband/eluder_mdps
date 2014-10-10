@@ -243,15 +243,23 @@ Our main result, Theorem \ref{thm: main regret}, bounds the expected regret of P
 \label{thm: main regret} \hspace{0.00000000000001mm} \newline
 Let $M^*$ be an MDP with state space $\Sc$, action space $\Ac$, rewards $R^* \in \Rc \subseteq \Pc^{C_\Rc,\sigma_\Rc}_{\Sc \times \Ac,\Real}$ and transitions $P^* \in \Pc \subseteq \Pc^{C_\Pc,\sigma_\Pc}_{\Sc \times \Ac,\Sc}$ for any $C_\Rc, C_\Pc, \sigma_\Rc, \sigma_\Pc >0 $.
 If $\phi$ is the distribution of $M^*$ and $K^*$ is a global Lipschitz constant for the future value function then:
+% {\small
+% \begin{eqnarray}
+% \label{eq: reg proof}
+% 	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le
+% 	\bigg[ C_\Rc + C_\Pc \bigg] +
+% 	\bigg[ 1 + \tau C_\Rc d_\Rc + 8\sqrt{d_\Rc(4C_\Rc + \sqrt{2\sigma_\Rc^2 \log(32T^3)})}
+% 	+ 8\sqrt{2 \sigma_\Rc^2 n_\Rc d_\Rc T} \bigg] \nonumber \\
+% 	& \hspace{-155mm} + \Exp[K^*]\left(1+\frac{1}{T-1}\right)\left( 1 + \tau C_\Pc d_\Pc + 8\sqrt{d_\Pc(4C_\Pc + \sqrt{2\sigma_\Pc^2 \log(32T^3)})}
+% 	+ 8\sqrt{2 \sigma_\Pc^2 n_\Pc d_\Pc T} \right)
+% \end{eqnarray}
+% }
 \begin{eqnarray}
 \label{eq: reg proof}
-	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le
-	\bigg[ C_\Rc + C_\Pc \bigg] +
-	\bigg[ 1 + \tau C_\Rc d_\Rc + 8\sqrt{d_\Rc(4C_\Rc + \sqrt{2\sigma_\Rc^2 \log(32T^3)})}
-	+ 8\sqrt{2 \sigma_\Rc^2 n_\Rc d_\Rc T} \bigg] \nonumber \\
-	& \hspace{-155mm} + \Exp[K^*]\left(1+\frac{1}{T-1}\right)\left( 1 + \tau C_\Pc d_\Pc + 8\sqrt{d_\Pc(4C_\Pc + \sqrt{2\sigma_\Pc^2 \log(32T^3)})}
-	+ 8\sqrt{2 \sigma_\Pc^2 n_\Pc d_\Pc T} \right)
+    \Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le \big[ C_\Rc + C_\Pc \big] + \tilde{D}(\Rc)
+    + + \Exp[K^*]\left(1+\frac{1}{T-1}\right) \tilde{D}(\Pc)
 \end{eqnarray}
+Where $\tilde{D}(\Fc)$ is shorthand for $ 1 + \tau C_\Fc d_\Fc + 8\sqrt{d_\Rc(4C_\Fc + \sqrt{2\sigma_\Fc^2 \log(32T^3)})} + 8\sqrt{2 \sigma_\Fc^2 n_\Fc d_\Fc T}$ for $\Fc$ equal to $\Rc$ or $\Pc$ respectively.
 \end{theorem}
 
 To clarify the assymptotic dependence of this bound we will make use of another classic measure of dimensionality, the Kolmogorov dimension of a function class $\Fc$, ${\rm dim}_K(\Fc)$, which we reproduce in this paper by Definition \ref{def: kol}.
@@ -259,10 +267,10 @@ Using this definition in Theorem \ref{thm: main regret} we can obtain our Coroll
 
 \begin{corollary}[Assymptotic regret bounds for PSRL in parameterized MDPs]
 \label{cor: ass regret} \hspace{0.00000000000001mm} \newline
-Under the assumptions of Theorem \ref{thm: main regret}:
+Under the assumptions of Theorem \ref{thm: main regret} and writing $\kappa_\Fc := {\rm dim}_K(\Fc)$:
 \begin{equation}
-	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] = \tilde{O} \left( \ \sigma_\Rc \sqrt{{\rm dim}_K(\Rc) {\rm dim}_E(\Rc,T^{-1}) T}
-		+ \Exp[K^*] \sigma_\Pc \sqrt{{\rm dim}_K(\Pc) {\rm dim}_E(\Pc,T^{-1}) T} \ \right)
+	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] = \tilde{O} \left( \ \sigma_\Rc \sqrt{\kappa_\Rc d_\Rc T}
+		+ \Exp[K^*] \sigma_\Pc \sqrt{\kappa_\Pc d_\Pc T} \ \right)
 \end{equation}
 Where $\tilde{O}(\cdot)$ ignores terms logarithmic in $T$.
 \end{corollary}
@@ -357,7 +365,9 @@ Define $r = \frac{\overline{h}}{\underline{h}} > 1$ to be the condition number.
 If $\mathcal{F} = \{ f \ | f(x) = g(\theta \phi(x))  \text{ for } \theta \in \Real^{n \times p}, \phi \in \Real^p ,
 \|\theta \|_2 \le C_\theta , \|\phi\|_2 \le C_\phi \}$
 then for any $\Xc$:
+{\small
 $${\rm dim}_E(\Fc, \epsilon) \le p \left(r^2(4n-2)+1\right)\frac{e}{e-1} \left(\log \left[\left(r^2(4n-2)+1 \right) \left(1+ \left(\frac{2C_\theta C_\phi}{\epsilon} \right)^2\right) \right] \right) + 1 = \tilde{O}(r^2 np)$$
+}
 \end{prop}
 
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -516,16 +526,18 @@ Let $A = \{R^*, R_k \in \Rc_k \ \forall k \}$ and $B = \{P^*,P_k \in \Pc_k \ \fo
 	\Exp\left[ \sum_{k=1}^m \sum_{i=1}^\tau
 		\left\{ | \overline{r}^k(x_{k,i}) - \overline{r}^*(x_{k,i})|
 		+ K^k \|\overline{p}^k(x_{k,i}) - \overline{p}^*(x_{k,i}) \|_2 \right\}\right] \nonumber \\
-	&\le& \sum_{k=1}^m \sum_{i=1}^\tau \left\{ w_{\Rc_k}(x_{k,i}) +
+	&& \hspace{-10mm} \le \sum_{k=1}^m \sum_{i=1}^\tau \left\{ w_{\Rc_k}(x_{k,i}) +
 		 \Exp[K^k|A,B] w_{\Pc_k}(x_{k,i}) + 8 \delta (C_\Rc + C_\Pc) \right\}
 \end{eqnarray}
 The posterior sampling lemma ensures that $\Exp[K^k] = \Exp[K^*]$ so that
 $\Exp[K^k|A,B] \le \frac{\Exp[K^*]}{\Prob(A,B)} \le \frac{\Exp[K^*]}{1-8\delta}$
 by a union bound on $\{A^c \cup B^c\}$.
 We fix $\delta = 1/8T$ to see that:
+{\small
 $$ \Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le (C_\Rc + C_\Pc) +
 	\sum_{k=1}^m \sum_{i=1}^\tau w_{\Rc_k}(x_{k,i})
 	+ \Exp[K^*] \left(1+\frac{1}{T-1} \right)\sum_{k=1}^m \sum_{i=1}^\tau w_{\Pc_t}(x_{k,i})  $$
+}
 We now use equation \eqref{eq: beta star} together with Proposition \ref{prop: widths} to obtain our regret bounds.
 For ease of notation we will write $d_\Rc = {\rm dim}_E(\Rc,T^{-1})$ and $d_\Pc = {\rm dim}_E(\Pc,T^{-1})$.
 \begin{eqnarray}
@@ -535,17 +547,15 @@ For ease of notation we will write $d_\Rc = {\rm dim}_E(\Rc,T^{-1})$ and $d_\Pc 
 \end{eqnarray}
 We let $\alpha = 1/T^2$ and write $n_\Fc = \log(8 N(\Fc,1/T^2,\|\cdot\|_2)T)$ for $\Rc$ and $\Pc$ to complete our proof of Theorem \ref{thm: main regret}:
 \begin{eqnarray}
-	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le
-	\bigg[ C_\Rc + C_\Pc \bigg] +
-	\bigg[ 1 + \tau C_\Rc d_\Rc + 8\sqrt{d_\Rc(4C_\Rc + \sqrt{2\sigma_\Rc^2 \log(32T^3)})}
-	+ 8\sqrt{2 \sigma_\Rc^2 n_\Rc d_\Rc T} \bigg] \nonumber \\
-	+ \Exp[K^*]\left(1+\frac{1}{T-1}\right)\left( 1 + \tau C_\Pc d_\Pc + 8\sqrt{d_\Pc(4C_\Pc + \sqrt{2\sigma_\Pc^2 \log(32T^3)})}
-	+ 8\sqrt{2 \sigma_\Pc^2 n_\Pc d_\Pc T} \right) \nonumber
+\label{eq: reg proof}
+    \Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le \big[ C_\Rc + C_\Pc \big] + \tilde{D}(\Rc)
+     + \Exp[K^*]\left(1+\frac{1}{T-1}\right) \tilde{D}(\Pc)
 \end{eqnarray}
+Where $\tilde{D}(\Fc)$ is shorthand for $ 1 + \tau C_\Fc d_\Fc + 8\sqrt{d_\Rc(4C_\Fc + \sqrt{2\sigma_\Fc^2 \log(32T^3)})} + 8\sqrt{2 \sigma_\Fc^2 n_\Fc d_\Fc T}$ for $\Fc$ equal to $\Rc$ or $\Pc$ respectively.
 The first term $[C_\Rc + C_\Pc]$ bounds the contribution from missed confidence sets.
-The second set of square brackets bounds the cost of learning the reward function $R^*$.
+The cost of learning the reward function $R^*$ is bounded by $\tilde{D}(\Rc)$.
 In most problems the remaining contribution from transitions and lost future value will be dominant.
-To clarify the assymptotic dependence we will now introduce another common notion of dimension.
+To clarify the assymptotic dependence we finally introduce another common notion of dimension.
 \begin{mydef}
 \label{def: kol}
 The Kolmogorov dimension of a function class $\Fc$ is given by:
