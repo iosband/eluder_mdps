@@ -139,11 +139,12 @@ A good overview of various efficiency guarantees is given in section 3 of Li et 
 
 Broadly, algorithms for RL can be separated as either model-based, which build a generative model of the environment, or model-free which do not.
 Algorithms of both type have been developed to provide PAC-MDP bounds polynomial in the number of states $S$ and actions $A$ \cite{kearns2002near,brafman2003r,strehl2006pac}.
-However, model-free approaches often struggle to plan efficient exploration so that the state of the art bounds on the regret to time $T$ of $\tilde{O}(S\sqrt{AT})$ have only been attained by model-based algorithms \cite{jaksch2010near,osband2013more}.
+However, model-free approaches can struggle to plan efficient exploration.
+The only near-optimal regret bounds to time $T$ of $\tilde{O}(S\sqrt{AT})$ have only been attained by model-based algorithms \cite{jaksch2010near,osband2013more}.
 But even these bounds grow with the cardinality of the state and action spaces, which may be extremely large or even infinite.
 Worse still, there is a lower bound $\Omega ( \sqrt{SAT} )$ for the expected regret in an arbitrary MDP \cite{jaksch2010near}.
 
-In special cases, where the reward or transition function is known to belong to a certain functional family, existing algorithms can exploit the structure to move beyond this ```tabula rasa'' lower bound.
+In special cases, where the reward or transition function is known to belong to a certain functional family, existing algorithms can exploit the structure to move beyond this ```tabula rasa'' (where nothing is assumed beyond $S$ and $A$) lower bound.
 The most widely-studied parameterization is the degenerate MDP with no transitions, the mutli-armed bandit \cite{auer2003using,bubeck2011xarmed,russo2013}.
 Another common assumption is that the transition function is linear in states and actions.
 Papers here establigh regret bounds $\tilde{O}(\sqrt{T})$ for linear quadratic control \cite{abbasi2011improved}, but with constants that grow exponentially with dimension.
@@ -153,9 +154,9 @@ However, the proposed algorithm UCCRL is not computationally tractable and the b
 
 In this paper we analyse the simple and intuitive algorithm \emph{posterior sampling for reinforcement learning} (PSRL) \cite{thompson1933,strens2000bayesian,osband2013more}.
 PSRL was initially introduced as a heuristic method \cite{strens2000bayesian}, but has since been shown to satisfy state of the art regret bounds in finite MDPs \cite{osband2013more} and also exploit the structure of factored MDPs    \cite{osband2014near}.
-We show that this same algorithm satisfies regret bounds that depends upon the dimensionality, rather than the cardinality, of the underlying reward and transition function classes.
+We show that this same algorithm satisfies general regret bounds that depends upon the dimensionality, rather than the cardinality, of the underlying reward and transition function classes.
 To characterize the complexity of this learning problem we extend the definition of the eluder dimension, previously introduced for bandits \cite{russo2013eluder}, to capture the complexity of the reinforcement learning problem.
-results provide a unified analysis of model-based reinforcement learning and provide new state of the art bounds in several important problem settings.
+Our results provide a unified analysis of model-based reinforcement learning in general and provide new state of the art bounds in several important problem settings.
 
 
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -171,22 +172,22 @@ A policy $\mu$ is a function mapping each state $s \in \Sc$ and $i = 1,\ldots,\t
 For each MDP $M$ and policy $\mu$, we define a value function $V$:
 \begin{equation}
 \label{eq: value fn}
-V^{M}_{\mu, i}(s) := \Exp_{M,\mu}\left[ \sum_{j=i}^{\tau} \overline{r}^M(s_j,a_j) \Big| s_i = s \right]
+V^{M}_{\mu, i}(s) := \Exp_{M,\mu}\big[ \sum_{j=i}^{\tau} \overline{r}^M(s_j,a_j) \Big| s_i = s\big]
 \end{equation}
 where $\overline{r}^M(s,a) := \Exp[r | r \sim R^M(s,a)]$ and the subscripts of the expectation operator indicate that $a_j = \mu(s_j, j)$, and $s_{j+1} \sim P^M(\cdot| s_j, a_j)$ for $j = i, \ldots, \tau$.  A policy $\mu$ is said to be optimal for MDP $M$ if $V^{M}_{\mu, i}(s) = \max_{\mu'} V^{M}_{\mu', i}(s)$ for all $s \in \Sc$ and $i=1,\ldots,\tau$. We will associate with each MDP $M$ a policy $\mu^M$ that is optimal for $M$.
 
-In our formulation we require that the state space $\Sc$ is represented as some subset of $\Real^d$ for $d$ finite and with inner product and $\| \cdot \|_2$-norm.
-We do this so that the transition function can be decomposed as a mean value in $\Sc$ plus additive noise.
+We require that the state space $\Sc$ is a subset of $\Real^d$ for some finite $d$ with a $\| \cdot \|_2$-norm induced by an inner product.
+This allows us to decompose the transition function as a mean value in $\Sc$ plus additive noise $s' \sim P^M(\cdot|s,a) \implies s' = \overline{p}^M(s,a) + \epsilon_P$.
 At first this may seem to exclude discrete MDPs with $S$ states from our analysis.
-But even in this case we can rewrite the state with the component 1 if that state is active and 0 otherwise for $s_t \in \Sc = [0,1]^S \subset \Real^S$.
-In fact, this notational convention doesn't pose too much restriction.
+However, we can represent the discrete state as a probability vector $s_t \in \Sc = [0,1]^S \subset \Real^S$ with a single active component equal to 1 and 0 otherwise.
+In fact, the notational convention that $\Sc \subseteq \Real^d$ should not impose a great restriction for most practical settings.
 
-For any distribution $\Phi$ over $\Sc$, we define the one step future value function $U$ to be the expected value of the optimal policy with the following state distributed according to $\Phi$.
+For any distribution $\Phi$ over $\Sc$, we define the one step future value function $U$ to be the expected value of the optimal policy with the next state distributed according to $\Phi$.
 \begin{equation}
 \label{eq: future value}
-U^M_{i}(\Phi) := \Exp_{M,\mu^M}\left[ V^M_{\mu^M,i+1}(s) \big| s \sim \Phi \right].
+U^M_{i}(\Phi) := \Exp_{M,\mu^M}\big[ V^M_{\mu^M,i+1}(s) \big| s \sim \Phi \big].
 \end{equation}
-One natural regularity condition for learning is that the future values of similar distributions $\Phi$ and $\tilde{\Phi}$ should be similar.
+One natural regularity condition for learning is that the future values of similar distributions should be similar.
 We examine this idea through the Lipschitz constant on the means of these state distributions.
 We write $\Ec(\Phi) := \Exp[s | s \sim \Phi] \in \Sc$ for the mean state of a distribution $\Phi$ and express the Lipschitz continuity for $U_i^M$ as:
 \begin{equation}
@@ -213,16 +214,16 @@ with $\mu^* = \mu^{M^*}$ and $\mu_{k}\sim \pi_{k}(H_{t_k})$. Note that regret is
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 \section{Main results}
-We now introduce the algorithm posterior sampling for reinforcement learning (PSRL) first proposed by Strens \cite{strens2000bayesian} and later was shown to satisfy efficient regret bounds in finite MDPs \cite{osband2013more}.
-The algorithm begins with a prior distribution over MDPs with rewards in $\Rc$ and transitions in $\Pc$.
-At the start of the $k$th episode, PSRL samples and MDP $M_k$ from the posterior, without conjugate priors this can be acheived by algorithms such as Metropolis-Hastings.
+We now review the algorithm PSRL, an adaptation of Thompson sampling \cite{thompson1933} to reinforcement learning.
+PSRL was first proposed by Strens \cite{strens2000bayesian} and later was shown to satisfy efficient regret bounds in finite MDPs \cite{osband2013more}.
+The algorithm begins with a prior distribution over MDPs.
+At the start of episode $k$, PSRL samples an MDP $M_k$ from the posterior.
 PSRL then follows the policy $\mu_k = \mu^{M_k}$ which is optimal for this \emph{sampled} MDP during episode $k$.
-This algorithm is a natural adaptation of Thompson sampling \cite{thompson1933}, one of the oldest and most effective algorithms for multi-armed bandits, to reinforcement learning.
 
 \begin{algorithm}[H]
 \caption{\protect\\ Posterior Sampling for Reinforcement Learning (PSRL)}
 \label{alg: PS}
-
+{\small
 \begin{algorithmic}[1]
     \State \textbf{Input: }Prior distribution $\phi$ for $M^*$, t=1
     \For{episodes $k=1,2,..$}
@@ -235,11 +236,12 @@ This algorithm is a natural adaptation of Thompson sampling \cite{thompson1933},
 	    \EndFor
 	\EndFor
 \end{algorithmic}
+}
 \end{algorithm}
 
 To state our results we first introduce some notation.
 For any set $\Xc$ and $\Yc \subseteq \Real^d$ for $d$ finite let $\Pc^{C,\sigma}_{\Xc,\Yc}$ be the family the distributions from $\Xc$ to $\Yc$ with mean $\|\cdot\|_2$-bounded in $[0,C]$ and additive $\sigma$-sub-Gaussian noise.
-For the family $\Fc$ let $N(\Fc,\alpha,\|\cdot\|_2)$ be the $\alpha$-covering number of $\Fc$ with respect to the $\|\cdot\|_2$-norm and write $n_\Fc = \log(8 N(\Fc,1/T^2,\|\cdot\|_2)T)$ for brevity.
+We let $N(\Fc,\alpha,\|\cdot\|_2)$ be the $\alpha$-covering number of $\Fc$ with respect to the $\|\cdot\|_2$-norm and write $n_\Fc = \log(8 N(\Fc,1/T^2,\|\cdot\|_2)T)$ for brevity.
 Finally we  write $d_E(\Fc) = {\rm dim}_E(\Fc,T^{-1})$ for the eluder dimension of $\Fc$ at precision $T^{-1}$, a notion of dimension specialized to sequential measurements described in Section \ref{sec: eluder}.
 
 Our main result, Theorem \ref{thm: main regret}, bounds the expected regret of PSRL at any time $T$.
@@ -264,10 +266,12 @@ If $\phi$ is the distribution of $M^*$ and $K^* = K^*(\Pc)$ is a global Lipschit
     \Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le \big[ C_\Rc + C_\Pc \big] + \tilde{D}(\Rc)
     + + \Exp[K^*]\left(1+\frac{1}{T-1}\right) \tilde{D}(\Pc)
 \end{eqnarray}
-Where $\tilde{D}(\Fc)$ is shorthand for $ 1 + \tau C_\Fc d_E(\Fc) + 8\sqrt{d_E(\Fc)(4C_\Fc + \sqrt{2\sigma_\Fc^2 \log(32T^3)})} + 8\sqrt{2 \sigma_\Fc^2 n_\Fc d_E(\Fc) T}$ for $\Fc$ equal to $\Rc$ or $\Pc$ respectively.
+Where $\tilde{D}(\Fc) := 1 + \tau C_\Fc d_E(\Fc) + 8\sqrt{d_E(\Fc)(4C_\Fc + \sqrt{2\sigma_\Fc^2 \log(32T^3)})} + 8\sqrt{2 \sigma_\Fc^2 n_\Fc d_E(\Fc) T}$
+is a shorthand for either $\Rc$ or $\Pc$ as above.
 \end{theorem}
-
-To clarify the assymptotics if this bound we use a classic measure of dimensionality.
+Theorem \ref{thm: main regret} is a general result that applies to almost all RL settings of interest.
+In particular, we note that any bounded function is sub-Gaussian.
+To clarify the assymptotics if this bound we use another classical measure of dimensionality.
 \begin{mydef}
 \label{def: kol}
 The Kolmogorov dimension of a function class $\Fc$ is given by:
@@ -577,6 +581,10 @@ Second, we wonder whether it is possible to extend our analysis to learning in M
 Finally, there is a fundamental hurdle to model-based reinforcement learning that planning for the optimal policy even in a \emph{known} MDP may be intractable.
 We assume access to an approximate MDP planner, but this will generally require lengthy computations.
 We would like to examine whether similar bounds are attainable in model-free learning \cite{van2014generalization}, which may obviate complicated MDP planning, and examine the computational and statistical efficiency tradeoffs between these methods.
+
+\subsubsection*{Acknowledgments}
+Osband is supported by Stanford Graduate Fellowships courtesy of PACCAR inc.
+This work was supported in part by Award CMMI-0968707 from the National Science Foundation.
 
 
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

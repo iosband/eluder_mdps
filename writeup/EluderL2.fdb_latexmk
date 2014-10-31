@@ -1,13 +1,13 @@
 # Fdb version 3
-["bibtex EluderL2"] 1414771375 "EluderL2.aux" "EluderL2.bbl" "EluderL2" 1414771377
+["bibtex EluderL2"] 1414772278 "EluderL2.aux" "EluderL2.bbl" "EluderL2" 1414777687
   "/usr/local/texlive/2013/texmf-dist/bibtex/bst/base/unsrt.bst" 1292289607 18030 1376b4b231b50c66211e47e42eda2875 ""
-  "EluderL2.aux" 1414771376 3316 6b9237ebd5c3e96a1e96a65e543eaa2b ""
+  "EluderL2.aux" 1414777686 3316 26502958912a5740ce28e83833687541 ""
   "EluderL2.bcf" 0 -1 0 ""
   "referenceInformation.bib.bib" 0 -1 0 ""
   (generated)
   "EluderL2.blg"
   "EluderL2.bbl"
-["pdflatex"] 1414771375 "EluderL2.tex" "EluderL2.pdf" "EluderL2" 1414771377
+["pdflatex"] 1414777685 "EluderL2.tex" "EluderL2.pdf" "EluderL2" 1414777687
   "/usr/local/texlive/2013/texmf-dist/tex/context/base/supp-pdf.mkii" 1337017135 71627 94eb9990bed73c364d7f53f960cc8c5b ""
   "/usr/local/texlive/2013/texmf-dist/tex/generic/oberdiek/atbegshi.sty" 1335995445 24460 92f559a71aac869021852c227c704b38 ""
   "/usr/local/texlive/2013/texmf-dist/tex/generic/oberdiek/etexcmds.sty" 1335995445 7612 c47308d923ec19888707b0f1792b326a ""
@@ -72,9 +72,9 @@
   "/usr/local/texlive/2013/texmf-dist/tex/latex/wasysym/uwasy.fd" 1137111081 2127 de456b4fb7b20e6651c727c9fdc94803 ""
   "/usr/local/texlive/2013/texmf-dist/tex/latex/wasysym/wasysym.sty" 1137111081 10611 eca9e56dd071530be0c56f0b968bbdb6 ""
   "/usr/local/texlive/2013/texmf-dist/tex/latex/xcolor/xcolor.sty" 1169481954 55224 a43bab84e0ac5e6efcaf9a98bde73a94 ""
-  "EluderL2.aux" 1414771376 3316 6b9237ebd5c3e96a1e96a65e543eaa2b ""
+  "EluderL2.aux" 1414777686 3316 26502958912a5740ce28e83833687541 ""
   "EluderL2.bbl" 1412911808 4799 73d7be29195b936d49e822b251cc792d "bibtex EluderL2"
-  "EluderL2.tex" 1414771373 61792 2e86fc4532ccef4b5fd260ff4364179e ""
+  "EluderL2.tex" 1414777684 61995 bcfd8245453a811b9c87470490997be5 ""
   "nips14submit_e.sty" 1400363377 8803 4be3f7745104c21ca95f608f0c9c0910 ""
   (generated)
   "EluderL2.pdf"
