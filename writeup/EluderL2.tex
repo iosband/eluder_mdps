@@ -166,7 +166,7 @@ Our results provide a unified analysis of model-based reinforcement learning in 
 
 We consider the problem of learning to optimize a random finite horizon MDP $M = (\Sc, \Ac, R^M, P^M, \tau, \rho)$ in repeated finite episodes of interaction.
 $\Sc$ is the state space, $\Ac$ is the action space, $R^M(s,a)$ is the reward distribution over $\Real$ and $P^M(\cdot|s,a)$ is the transition distribution over $\Sc$ when selecting action $a$ in state $s$, $\tau$ is the time horizon, and $\rho$ the initial state distribution.
-We define the MDP and all other random variables we will consider with respect to a probability space $(\Omega, \mathscr{F}, \mathbb{P})$.
+All random variables we will consider are on a probability space $(\Omega, \mathscr{F}, \mathbb{P})$.
 
 A policy $\mu$ is a function mapping each state $s \in \Sc$ and $i = 1,\ldots,\tau$ to an action $a \in \Ac$.
 For each MDP $M$ and policy $\mu$, we define a value function $V$:
@@ -177,10 +177,12 @@ V^{M}_{\mu, i}(s) := \Exp_{M,\mu}\big[ \sum_{j=i}^{\tau} \overline{r}^M(s_j,a_j)
 where $\overline{r}^M(s,a) := \Exp[r | r \sim R^M(s,a)]$ and the subscripts of the expectation operator indicate that $a_j = \mu(s_j, j)$, and $s_{j+1} \sim P^M(\cdot| s_j, a_j)$ for $j = i, \ldots, \tau$.  A policy $\mu$ is said to be optimal for MDP $M$ if $V^{M}_{\mu, i}(s) = \max_{\mu'} V^{M}_{\mu', i}(s)$ for all $s \in \Sc$ and $i=1,\ldots,\tau$. We will associate with each MDP $M$ a policy $\mu^M$ that is optimal for $M$.
 
 We require that the state space $\Sc$ is a subset of $\Real^d$ for some finite $d$ with a $\| \cdot \|_2$-norm induced by an inner product.
+These result actually extend to general Hilbert spaces, but we will not deal with that in this paper.
 This allows us to decompose the transition function as a mean value in $\Sc$ plus additive noise $s' \sim P^M(\cdot|s,a) \implies s' = \overline{p}^M(s,a) + \epsilon_P$.
 At first this may seem to exclude discrete MDPs with $S$ states from our analysis.
 However, we can represent the discrete state as a probability vector $s_t \in \Sc = [0,1]^S \subset \Real^S$ with a single active component equal to 1 and 0 otherwise.
 In fact, the notational convention that $\Sc \subseteq \Real^d$ should not impose a great restriction for most practical settings.
+
 
 For any distribution $\Phi$ over $\Sc$, we define the one step future value function $U$ to be the expected value of the optimal policy with the next state distributed according to $\Phi$.
 \begin{equation}
@@ -189,13 +191,13 @@ U^M_{i}(\Phi) := \Exp_{M,\mu^M}\big[ V^M_{\mu^M,i+1}(s) \big| s \sim \Phi \big].
 \end{equation}
 One natural regularity condition for learning is that the future values of similar distributions should be similar.
 We examine this idea through the Lipschitz constant on the means of these state distributions.
-We write $\Ec(\Phi) := \Exp[s | s \sim \Phi] \in \Sc$ for the mean state of a distribution $\Phi$ and express the Lipschitz continuity for $U_i^M$ as:
+We write $\Ec(\Phi) := \Exp[s | s \sim \Phi] \in \Sc$ for the mean of a distribution $\Phi$ and express the Lipschitz continuity for $U_i^M$ with respect to the $\|\cdot\|_2$-norm of the mean:
 \begin{equation}
 \label{eq: future Lipschitz}
 | U^M_i(\Phi) - U^M_i(\tilde{\Phi}) | \le K^M_i(\Dc) \| \Ec(\Phi) - \Ec(\tilde{\Phi}) \|_2 {\rm \ for \ all \ } \Phi, \tilde{\Phi} \in \Dc
 \end{equation}
 We define $K^M(\Dc) := \max_{i} K^M_i(\Dc)$ to be a global Lipschitz contant for the future value function with state distributions from $\Dc$.
-Where appropriate, we will just write $K^M = \sup_\Dc K^M(\Dc)$ where the supremum is taken over all possible one-step distributions for $M$.
+Where appropriate, we will condense our notation to write $K^M := K^M(\mathscr{D}(M))$ where $\mathscr{D}(M) := \{P^M(\cdot |s,a) | s \in \Sc, a \in \Ac \}$ is the set of all possible one-step state distributions under the MDP $M$.
 
 The reinforcement learning agent interacts with the MDP over episodes that begin at times $t_k = (k-1) \tau + 1$, $k=1,2,\ldots$.
 % At each time $t$, the agent selects an action $a_t$, observes a scalar reward $r_t$, and then transitions to $s_{t+1}$.
@@ -248,8 +250,11 @@ Our main result, Theorem \ref{thm: main regret}, bounds the expected regret of P
 
 \begin{theorem}[Expected regret for PSRL in parameterized MDPs]
 \label{thm: main regret} \hspace{0.00000000000001mm} \newline
-Let $M^*$ be an MDP with state space $\Sc$, action space $\Ac$, rewards $R^* \in \Rc \subseteq \Pc^{C_\Rc,\sigma_\Rc}_{\Sc \times \Ac,\Real}$ and transitions $P^* \in \Pc \subseteq \Pc^{C_\Pc,\sigma_\Pc}_{\Sc \times \Ac,\Sc}$ for any $C_\Rc, C_\Pc, \sigma_\Rc, \sigma_\Pc >0 $.
-If $\phi$ is the distribution of $M^*$ and $K^* = K^*(\Pc)$ is a global Lipschitz constant for the future value function as per \eqref{eq: future Lipschitz}:
+Fix a state space $\Sc$, action space $\Ac$, function families
+$\Rc \subseteq \Pc^{C_\Rc,\sigma_\Rc}_{\Sc \times \Ac,\Real}$ and
+$\Pc \subseteq \Pc^{C_\Pc,\sigma_\Pc}_{\Sc \times \Ac,\Sc}$ for any $C_\Rc, C_\Pc, \sigma_\Rc, \sigma_\Pc >0$.
+Let $M^*$ be an MDP with state space $\Sc$, action space $\Ac$, rewards $R^* \in \Rc $ and transitions $P^* \in \Pc $.
+If $\phi$ is the distribution of $M^*$ and $K^* = K^{M^*}$ is a global Lipschitz constant for the future value function as per \eqref{eq: future Lipschitz} then:
 % {\small
 % \begin{eqnarray}
 % \label{eq: reg proof}
@@ -266,8 +271,8 @@ If $\phi$ is the distribution of $M^*$ and $K^* = K^*(\Pc)$ is a global Lipschit
     \Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le \big[ C_\Rc + C_\Pc \big] + \tilde{D}(\Rc)
     + + \Exp[K^*]\left(1+\frac{1}{T-1}\right) \tilde{D}(\Pc)
 \end{eqnarray}
-Where $\tilde{D}(\Fc) := 1 + \tau C_\Fc d_E(\Fc) + 8\sqrt{d_E(\Fc)(4C_\Fc + \sqrt{2\sigma_\Fc^2 \log(32T^3)})} + 8\sqrt{2 \sigma_\Fc^2 n_\Fc d_E(\Fc) T}$
-is a shorthand for either $\Rc$ or $\Pc$ as above.
+Where for $\Fc$ equal to either $\Rc$ or $\Pc$ we will use the shorthand: \\
+$\tilde{D}(\Fc) := 1 + \tau C_\Fc d_E(\Fc) + 8\sqrt{d_E(\Fc)(4C_\Fc + \sqrt{2\sigma_\Fc^2 \log(32T^3)})} + 8\sqrt{2 \sigma_\Fc^2 n_\Fc d_E(\Fc) T}$.
 \end{theorem}
 Theorem \ref{thm: main regret} is a general result that applies to almost all RL settings of interest.
 In particular, we note that any bounded function is sub-Gaussian.
@@ -295,13 +300,14 @@ For clarity, we present bounds in the case of linear-quadratic control.
 
 \begin{corollary}[Assymptotic regret bounds for PSRL in bounded linear quadratic systems]
 \label{cor: LQR} \hspace{0.00000000000001mm} \newline
-Let $M^*$ be an $n$-dimensional linear-quadratic system with $\sigma$-sub-Gaussian noise.If the state is $\| \cdot \|_2$-bounded by $C$ such that any transition outside of this region is projected back within the $C$ ball and $\phi$ is the distribution of $M^*$, then:
+Let $M^*$ be an $n$-dimensional linear-quadratic system with $\sigma$-sub-Gaussian noise.
+If the state is $\| \cdot \|_2$-bounded by $C$ and $\phi$ is the distribution of $M^*$, then:
 \begin{equation}
 	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] = \tilde{O} \left( \sigma C \lambda_1 n^2 \sqrt{T} \ \right).
 \end{equation}
 Here $\lambda_1$ is the largest eigenvalue of the matrix $Q$ given as the solution of the Ricatti equations for the unconstrained optimal value function $V(s) = -s^T Q s$ \cite{bertsekas1995dynamic}.
 \begin{proof}
-We simply apply the results of for eluder dimension in Section \ref{sec: eluder} to Corollary \ref{cor: ass regret} and upper bound the Lipschitz constant of the constrained LQR by $2 C \lambda_1$.
+We simply apply the results of for eluder dimension in Section \ref{sec: eluder} to Corollary \ref{cor: ass regret} and upper bound the Lipschitz constant of the constrained LQR by $2 C \lambda_1$, see Appendix \ref{app: Bounded LQR}.
 \end{proof}
 \end{corollary}
 
@@ -825,6 +831,27 @@ This proof follows exactly as per the linear case, but first using a simple redu
 To which we can now apply Lemma \ref{lem: norms trace} with the $\epsilon$ rescaled by $r$.
 Following the same arguments as for linear functions now completes our proof.
 
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+\section{Bounded LQR control}
+\label{app: Bounded LQR}
+
+We imagine a standard linear quadratic controller with rewards with $x = (s,a)$ the state-action vector.
+The rewards and transitions are given by:
+$$ R(x) = -x^T A x + \epsilon_R \ , \ P(x) = \Pi_C (Bx + \epsilon_P),$$
+where $A \succcurlyeq 0$ is positive semi-definite and $\Pi_C$ projects x onto the $\| \cdot \|_2$-ball at radius $C$.
+
+In the case of unbounded states and actions the Ricatti equations give the form of the optimal value function $V(s) = -s^T Q s$ for $Q \succcurlyeq 0$.
+In this case we can see that the difference in values of two states:
+$$ |V(s) - V(s')| = |-s^T Q s + {s'}^T Q s' | = |-(s + s')^T Q (s-s')| \le 2C\lambda_1 \|s-s'\|_2 $$
+where $\lambda_1$ is the largest eigenvalue of $Q$ and $C$ is an upper bound on the $\| \cdot \|_2$-norm of both $s$ and $s'$.
+We note that $2C \lambda_1$ works as an effective Lipshcitz constant when we know what $C$ can bound $s, s'$.
+
+We observe that for any projection $\Pi_C(x) = \alpha x$ for $\alpha \in (0, 1]$ and that for all positive semi-definite matrices $A \succcurlyeq 0$, $(\alpha x)^T A (\alpha x) = \alpha^2 x^T A x \le x^T A x$.
+Using this observation together with reward and transition functions we can see that the value function of the bounded LQR system is always greater than or equal to that of the unconstrained value function.
+The effect of excluding the low-reward outer region, but maintaining the higher-reward inner region means that the value function becomes more flat in the bounded case, and so $2C \lambda_1$ works as an effective Lipschitz constant for this problem too.
+
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -853,7 +880,7 @@ The algorithm follows the style of UCRL2 \cite{jaksch2010near} so that at the st
 
 Generally, step 4 of this algorithm with not be computationally tractable even when solving for $\mu^M$ is possible for a given $M$.
 
-%---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 \end{document}
 
