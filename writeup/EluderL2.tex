@@ -64,6 +64,8 @@
 \newcommand{\Ac}{\mathcal{A}}
 \newcommand{\Mc}{\mathcal{M}}
 \newcommand{\Tc}{\mathcal{T}}
+\newcommand{\Ec}{\mathcal{E}}
+\newcommand{\Dc}{\mathcal{D}}
 \newcommand{\Dep}{ \Delta^H,\Delta^F,\mathcal{F},\epsilon }
 
 \newcommand{\conf}{\mathcal{F}^d_t}
@@ -165,11 +167,6 @@ We consider the problem of learning to optimize a random finite horizon MDP $M =
 $\Sc$ is the state space, $\Ac$ is the action space, $R^M(s,a)$ is the reward distribution over $\Real$ and $P^M(\cdot|s,a)$ is the transition distribution over $\Sc$ when selecting action $a$ in state $s$, $\tau$ is the time horizon, and $\rho$ the initial state distribution.
 We define the MDP and all other random variables we will consider with respect to a probability space $(\Omega, \mathscr{F}, \mathbb{P})$.
 
-For our unified analysis we will require that the state space $\Sc$ is represented as some $L^2$ space.
-In any MDP with states in $\Real^n$ this is completely natural.
-For discrete MDPs over $\{1,..,S\}$, we will consider states $s_t \in \Sc := [0,1]^S$.
-In this case, the traditional transition function is now given by the \emph{expectation} of our transition distribution $\overline{p}^M(s,a) := \Exp \left[s' | s' \sim P^M(\cdot|s,a)\right]$.
-
 A policy $\mu$ is a function mapping each state $s \in \Sc$ and $i = 1,\ldots,\tau$ to an action $a \in \Ac$.
 For each MDP $M$ and policy $\mu$, we define a value function $V$:
 \begin{equation}
@@ -178,23 +175,30 @@ V^{M}_{\mu, i}(s) := \Exp_{M,\mu}\left[ \sum_{j=i}^{\tau} \overline{r}^M(s_j,a_j
 \end{equation}
 where $\overline{r}^M(s,a) := \Exp[r | r \sim R^M(s,a)]$ and the subscripts of the expectation operator indicate that $a_j = \mu(s_j, j)$, and $s_{j+1} \sim P^M(\cdot| s_j, a_j)$ for $j = i, \ldots, \tau$.  A policy $\mu$ is said to be optimal for MDP $M$ if $V^{M}_{\mu, i}(s) = \max_{\mu'} V^{M}_{\mu', i}(s)$ for all $s \in \Sc$ and $i=1,\ldots,\tau$. We will associate with each MDP $M$ a policy $\mu^M$ that is optimal for $M$.
 
-% We will also introduce the concept of a future value function $U$, which is the expected value of the optimal policy following a single transition according to $Q$,
-We also define the future value function $U$ to be the expected value of the optimal policy following a single transition according to a distribution $Q$,
+In our formulation we require that the state space $\Sc$ is represented as some subset of $\Real^d$ for $d$ finite and with inner product and $\| \cdot \|_2$-norm.
+We do this so that the transition function can be decomposed as a mean value in $\Sc$ plus additive noise.
+At first this may seem to exclude discrete MDPs with $S$ states from our analysis.
+But even in this case we can rewrite the state with the component 1 if that state is active and 0 otherwise for $s_t \in \Sc = [0,1]^S \subset \Real^S$.
+In fact, this notational convention doesn't pose too much restriction.
+
+For any distribution $\Phi$ over $\Sc$, we define the one step future value function $U$ to be the expected value of the optimal policy with the following state distributed according to $\Phi$.
 \begin{equation}
 \label{eq: future value}
-U^M_{i}(Q) := \Exp_{M,\mu^M}\left[ V^M_{\mu^M,i+1}(s) \big| s \sim Q \right].
+U^M_{i}(\Phi) := \Exp_{M,\mu^M}\left[ V^M_{\mu^M,i+1}(s) \big| s \sim \Phi \right].
 \end{equation}
-In most settings of interest, similar transition distributions $Q,\tilde{Q}$ will have similar future values.
-We formalize this idea through the notion of Lipschitz continuity in the norm of expectation $\| \Exp[\cdot] \|_2$ over transition distributions such that for all $Q,\tilde{Q} \in \Pc$:
+One natural regularity condition for learning is that the future values of similar distributions $\Phi$ and $\tilde{\Phi}$ should be similar.
+We examine this idea through the Lipschitz constant on the means of these state distributions.
+We write $\Ec(\Phi) := \Exp[s | s \sim \Phi] \in \Sc$ for the mean state of a distribution $\Phi$ and express the Lipschitz continuity for $U_i^M$ as:
 \begin{equation}
 \label{eq: future Lipschitz}
-\| U^M_i(Q) - U^M_i(\tilde{Q}) \|_2 \le K^M_i(\Pc) \| \Exp[ Q - \tilde{Q}] \|_2.
+| U^M_i(\Phi) - U^M_i(\tilde{\Phi}) | \le K^M_i(\Dc) \| \Ec(\Phi) - \Ec(\tilde{\Phi}) \|_2 {\rm \ for \ all \ } \Phi, \tilde{\Phi} \in \Dc
 \end{equation}
-We define $K^M := \max_{i} K^M_i(\Pc)$ to be a global Lipschitz contant for the future value function.
+We define $K^M(\Dc) := \max_{i} K^M_i(\Dc)$ to be a global Lipschitz contant for the future value function with state distributions from $\Dc$.
+Where appropriate, we will just write $K^M = \sup_\Dc K^M(\Dc)$ where the supremum is taken over all possible one-step distributions for $M$.
 
 The reinforcement learning agent interacts with the MDP over episodes that begin at times $t_k = (k-1) \tau + 1$, $k=1,2,\ldots$.
-At each time $t$, the agent selects an action $a_t$, observes a scalar reward $r_t$, and then transitions to $s_{t+1}$.
-If an agent follows a policy $\mu$ then when in state $s$ at time $t$ during episode $k$, it selects an action $a_t=\mu(s, t - t_k)$.
+% At each time $t$, the agent selects an action $a_t$, observes a scalar reward $r_t$, and then transitions to $s_{t+1}$.
+% If an agent follows a policy $\mu$ then when in state $s$ at time $t$ during episode $k$, it selects an action $a_t=\mu(s, t - t_k)$.
 Let $H_t = (s_1,a_1,r_1,\ldots,s_{t-1},a_{t-1},r_{t-1})$ denote the history of observations made \emph{prior} to time $t$.
 A reinforcement learning algorithm is a deterministic sequence $\{\pi_k | k = 1, 2, \ldots\}$ of functions, each mapping $H_{t_k}$ to a probability distribution $\pi_{k}(H_{t_k})$ over policies which the agent will employ during the $k$th episode.
 We define the regret incurred by a reinforcement learning algorithm $\pi$ up to time $T$ to be
@@ -210,7 +214,8 @@ with $\mu^* = \mu^{M^*}$ and $\mu_{k}\sim \pi_{k}(H_{t_k})$. Note that regret is
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 \section{Main results}
 We now introduce the algorithm posterior sampling for reinforcement learning (PSRL) first proposed by Strens \cite{strens2000bayesian} and later was shown to satisfy efficient regret bounds in finite MDPs \cite{osband2013more}.
-The algorithm begins with a prior distribution over MDPs with rewards in $\Rc$ and transitions in $\Pc$, at the start of the $k$th episode, PSRL samples and MDP $M_k$ from the posterior\footnote{Without conjugate priors this can be acheived by algorithms such as Metropolis-Hastings.}.
+The algorithm begins with a prior distribution over MDPs with rewards in $\Rc$ and transitions in $\Pc$.
+At the start of the $k$th episode, PSRL samples and MDP $M_k$ from the posterior, without conjugate priors this can be acheived by algorithms such as Metropolis-Hastings.
 PSRL then follows the policy $\mu_k = \mu^{M_k}$ which is optimal for this \emph{sampled} MDP during episode $k$.
 This algorithm is a natural adaptation of Thompson sampling \cite{thompson1933}, one of the oldest and most effective algorithms for multi-armed bandits, to reinforcement learning.
 
@@ -233,16 +238,16 @@ This algorithm is a natural adaptation of Thompson sampling \cite{thompson1933},
 \end{algorithm}
 
 To state our results we first introduce some notation.
-For any set $\Xc$ and $L^2$ space $(\Yc,\|\cdot\|_2)$ let $\Pc^{C,\sigma}_{\Xc,\Yc}$ be the family the distributions from $\Xc$ to $\Yc$ with mean norm bounded in $[0,C]$ and additive $\sigma$-sub-Gaussian noise.
+For any set $\Xc$ and $\Yc \subseteq \Real^d$ for $d$ finite let $\Pc^{C,\sigma}_{\Xc,\Yc}$ be the family the distributions from $\Xc$ to $\Yc$ with mean $\|\cdot\|_2$-bounded in $[0,C]$ and additive $\sigma$-sub-Gaussian noise.
 For the family $\Fc$ let $N(\Fc,\alpha,\|\cdot\|_2)$ be the $\alpha$-covering number of $\Fc$ with respect to the $\|\cdot\|_2$-norm and write $n_\Fc = \log(8 N(\Fc,1/T^2,\|\cdot\|_2)T)$ for brevity.
-Finally we  write $d_\Fc = {\rm dim}_E(\Fc,T^{-1})$ for the eluder dimension of $\Fc$ at precision $T^{-1}$, a notion of dimension specialized to sequential measurements described in Section \ref{sec: eluder}.
+Finally we  write $d_E(\Fc) = {\rm dim}_E(\Fc,T^{-1})$ for the eluder dimension of $\Fc$ at precision $T^{-1}$, a notion of dimension specialized to sequential measurements described in Section \ref{sec: eluder}.
 
 Our main result, Theorem \ref{thm: main regret}, bounds the expected regret of PSRL at any time $T$.
 
 \begin{theorem}[Expected regret for PSRL in parameterized MDPs]
 \label{thm: main regret} \hspace{0.00000000000001mm} \newline
 Let $M^*$ be an MDP with state space $\Sc$, action space $\Ac$, rewards $R^* \in \Rc \subseteq \Pc^{C_\Rc,\sigma_\Rc}_{\Sc \times \Ac,\Real}$ and transitions $P^* \in \Pc \subseteq \Pc^{C_\Pc,\sigma_\Pc}_{\Sc \times \Ac,\Sc}$ for any $C_\Rc, C_\Pc, \sigma_\Rc, \sigma_\Pc >0 $.
-If $\phi$ is the distribution of $M^*$ and $K^*$ is a global Lipschitz constant for the future value function then:
+If $\phi$ is the distribution of $M^*$ and $K^* = K^*(\Pc)$ is a global Lipschitz constant for the future value function as per \eqref{eq: future Lipschitz}:
 % {\small
 % \begin{eqnarray}
 % \label{eq: reg proof}
@@ -259,36 +264,40 @@ If $\phi$ is the distribution of $M^*$ and $K^*$ is a global Lipschitz constant 
     \Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le \big[ C_\Rc + C_\Pc \big] + \tilde{D}(\Rc)
     + + \Exp[K^*]\left(1+\frac{1}{T-1}\right) \tilde{D}(\Pc)
 \end{eqnarray}
-Where $\tilde{D}(\Fc)$ is shorthand for $ 1 + \tau C_\Fc d_\Fc + 8\sqrt{d_\Rc(4C_\Fc + \sqrt{2\sigma_\Fc^2 \log(32T^3)})} + 8\sqrt{2 \sigma_\Fc^2 n_\Fc d_\Fc T}$ for $\Fc$ equal to $\Rc$ or $\Pc$ respectively.
+Where $\tilde{D}(\Fc)$ is shorthand for $ 1 + \tau C_\Fc d_E(\Fc) + 8\sqrt{d_E(\Fc)(4C_\Fc + \sqrt{2\sigma_\Fc^2 \log(32T^3)})} + 8\sqrt{2 \sigma_\Fc^2 n_\Fc d_E(\Fc) T}$ for $\Fc$ equal to $\Rc$ or $\Pc$ respectively.
 \end{theorem}
 
-To clarify the assymptotic dependence of this bound we will make use of another classic measure of dimensionality, the Kolmogorov dimension of a function class $\Fc$, ${\rm dim}_K(\Fc)$, which we reproduce in this paper by Definition \ref{def: kol}.
-Using this definition in Theorem \ref{thm: main regret} we can obtain our Corollary.
-
+To clarify the assymptotics if this bound we use a classic measure of dimensionality.
+\begin{mydef}
+\label{def: kol}
+The Kolmogorov dimension of a function class $\Fc$ is given by:
+$$ {\rm dim}_K(\Fc) := \limsup_{\alpha \downarrow 0} \frac{\log(N(\Fc,\alpha,\|\cdot\|_2))}{\log(1/\alpha)} .$$
+\end{mydef}
+Using Definition \ref{def: kol} in Theorem \ref{thm: main regret} we can obtain our Corollary.
 \begin{corollary}[Assymptotic regret bounds for PSRL in parameterized MDPs]
 \label{cor: ass regret} \hspace{0.00000000000001mm} \newline
-Under the assumptions of Theorem \ref{thm: main regret} and writing $\kappa_\Fc := {\rm dim}_K(\Fc)$:
+Under the assumptions of Theorem \ref{thm: main regret} and writing $d_K(\Fc) := {\rm dim}_K(\Fc)$:
 \begin{equation}
-	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] = \tilde{O} \left( \ \sigma_\Rc \sqrt{\kappa_\Rc d_\Rc T}
-		+ \Exp[K^*] \sigma_\Pc \sqrt{\kappa_\Pc d_\Pc T} \ \right)
+	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] = \tilde{O} \left( \ \sigma_\Rc \sqrt{d_K(\Rc) d_E(\Rc) T}
+		+ \Exp[K^*] \sigma_\Pc \sqrt{d_K(\Pc) d_E(\Pc) T} \ \right)
 \end{equation}
 Where $\tilde{O}(\cdot)$ ignores terms logarithmic in $T$.
 \end{corollary}
 
-Using the bounds on eluder dimension given in Section \ref{sec: eluder} we can provide concrete regret bounds in a number of canonical domains such as discrete MDPs, linear-quadratic control and even generalized linear systems.
+In Section \ref{sec: eluder} we provide bounds on the eluder dimension of several function classes.
+These lead to explicit regret bounds in a number of important domains such as discrete MDPs, linear-quadratic control and even generalized linear systems.
 In all of these cases the eluder dimension scales comparably with more traditional notions of dimensionality.
 For clarity, we present bounds in the case of linear-quadratic control.
 
-\begin{corollary}[Assymptotic regret bounds for PSRL in linear quadratic systems]
+\begin{corollary}[Assymptotic regret bounds for PSRL in bounded linear quadratic systems]
 \label{cor: LQR} \hspace{0.00000000000001mm} \newline
-Let $M^*$ be a linear-quadratic system with $n$-dimensional states and actions $\|\cdot\|_2$-bounded in $[0,C]$ and $\sigma$-sub-Gaussian noise.
-If $\phi$ is the distribution of $M^*$, then:
+Let $M^*$ be an $n$-dimensional linear-quadratic system with $\sigma$-sub-Gaussian noise.If the state is $\| \cdot \|_2$-bounded by $C$ such that any transition outside of this region is projected back within the $C$ ball and $\phi$ is the distribution of $M^*$, then:
 \begin{equation}
-	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] = \tilde{O} \left( \sigma C \lambda_1 n^2 \sqrt{T} \ \right)
+	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] = \tilde{O} \left( \sigma C \lambda_1 n^2 \sqrt{T} \ \right).
 \end{equation}
-Where $\lambda_1$ is the largest eigenvalue of the matrix $Q$ given as the solution of the Ricatti equations for the unconstrained optimal value function $V(s) = s^T Q s$ \cite{bertsekas1995dynamic}.
+Here $\lambda_1$ is the largest eigenvalue of the matrix $Q$ given as the solution of the Ricatti equations for the unconstrained optimal value function $V(s) = -s^T Q s$ \cite{bertsekas1995dynamic}.
 \begin{proof}
-We simply apply the results of for eluder dimension in Section \ref{sec: eluder} to Corollary \ref{cor: ass regret} and upper bound the Lipschitz constant of the constrained LQR by $C \lambda_1$.
+We simply apply the results of for eluder dimension in Section \ref{sec: eluder} to Corollary \ref{cor: ass regret} and upper bound the Lipschitz constant of the constrained LQR by $2 C \lambda_1$.
 \end{proof}
 \end{corollary}
 
@@ -516,7 +525,7 @@ To reduce clutter and more closely follow the notation of Section \ref{sec: elud
 	&\le& \Exp\left[ \sum_{i=1}^\tau \left\{ | \overline{r}^k(x_{k,i}) - \overline{r}^*(x_{k,i})|
 	+ K^k \|\overline{p}^k(x_{k,i}) - \overline{p}^*(x_{k,i}) \|_2 \right\}\right]
 \end{eqnarray}
-Where $K^k$ is a global Lipschitz constant for the future value function of $M_k$.
+Where $K^k$ is a global Lipschitz constant for the future value function of $M_k$ as per \eqref{eq: future Lipschitz}.
 
 We now use the results from Sections \ref{sec: eluder} and \ref{sec: conf} to form the corresponding confidence sets $\Rc_k := \Rc_{t_k}(\beta^*(\Rc,\delta,\alpha))$ and $\Pc_k := \Pc_{t_k}(\beta^*(\Pc,\delta,\alpha))$ for the reward and transition functions respectively.
 Let $A = \{R^*, R_k \in \Rc_k \ \forall k \}$ and $B = \{P^*,P_k \in \Pc_k \ \forall k \}$ and condition upon these events to give:
@@ -539,11 +548,11 @@ $$ \Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le (C_\Rc + C_\Pc) +
 	+ \Exp[K^*] \left(1+\frac{1}{T-1} \right)\sum_{k=1}^m \sum_{i=1}^\tau w_{\Pc_t}(x_{k,i})  $$
 }
 We now use equation \eqref{eq: beta star} together with Proposition \ref{prop: widths} to obtain our regret bounds.
-For ease of notation we will write $d_\Rc = {\rm dim}_E(\Rc,T^{-1})$ and $d_\Pc = {\rm dim}_E(\Pc,T^{-1})$.
+For ease of notation we will write $d_E(\Rc) = {\rm dim}_E(\Rc,T^{-1})$ and $d_E(\Pc) = {\rm dim}_E(\Pc,T^{-1})$.
 \begin{eqnarray}
 	\Exp[{\rm Regret}(T,\pi^{PS},M^*)] &\le&
-	2 + (C_\Rc + C_\Pc) + \tau(C_\Rc d_\Rc+ C_\Pc d_\Pc) + \nonumber \\
-	&& \  4 \sqrt{\beta_T^*(\Rc,1/8T,\alpha) d_\Rc T} + 4 \sqrt{\beta_T^*(\Pc,1/8T,\alpha) d_\Pc T}
+	2 + (C_\Rc + C_\Pc) + \tau(C_\Rc d_E(\Rc)+ C_\Pc d_E(\Pc)) + \nonumber \\
+	&& \  4 \sqrt{\beta_T^*(\Rc,1/8T,\alpha) d_E(\Rc) T} + 4 \sqrt{\beta_T^*(\Pc,1/8T,\alpha) d_E(\Pc) T}
 \end{eqnarray}
 We let $\alpha = 1/T^2$ and write $n_\Fc = \log(8 N(\Fc,1/T^2,\|\cdot\|_2)T)$ for $\Rc$ and $\Pc$ to complete our proof of Theorem \ref{thm: main regret}:
 \begin{eqnarray}
@@ -551,17 +560,11 @@ We let $\alpha = 1/T^2$ and write $n_\Fc = \log(8 N(\Fc,1/T^2,\|\cdot\|_2)T)$ fo
     \Exp[{\rm Regret}(T,\pi^{PS},M^*)] \le \big[ C_\Rc + C_\Pc \big] + \tilde{D}(\Rc)
      + \Exp[K^*]\left(1+\frac{1}{T-1}\right) \tilde{D}(\Pc)
 \end{eqnarray}
-Where $\tilde{D}(\Fc)$ is shorthand for $ 1 + \tau C_\Fc d_\Fc + 8\sqrt{d_\Rc(4C_\Fc + \sqrt{2\sigma_\Fc^2 \log(32T^3)})} + 8\sqrt{2 \sigma_\Fc^2 n_\Fc d_\Fc T}$ for $\Fc$ equal to $\Rc$ or $\Pc$ respectively.
+Where $\tilde{D}(\Fc)$ is shorthand for $ 1 + \tau C_\Fc d_E(\Fc) + 8\sqrt{d_E(\Fc)(4C_\Fc + \sqrt{2\sigma_\Fc^2 \log(32T^3)})} + 8\sqrt{2 \sigma_\Fc^2 n_\Fc d_E(\Fc) T}$.
 The first term $[C_\Rc + C_\Pc]$ bounds the contribution from missed confidence sets.
 The cost of learning the reward function $R^*$ is bounded by $\tilde{D}(\Rc)$.
-In most problems the remaining contribution from transitions and lost future value will be dominant.
-To clarify the assymptotic dependence we finally introduce another common notion of dimension.
-\begin{mydef}
-\label{def: kol}
-The Kolmogorov dimension of a function class $\Fc$ is given by:
-$$ {\rm dim}_K(\Fc) := \limsup_{\alpha \downarrow 0} \frac{\log(N(\Fc,\alpha,\|\cdot\|_2))}{\log(1/\alpha)} .$$
-\end{mydef}
-Using this definition together with $n_\Rc,n_\Pc$ we complete our proof of Corollary \ref{cor: ass regret}.
+In most problems the remaining contribution bounding transitions and lost future value will be dominant.
+Corollary \ref{cor: ass regret} follows from the Definition \ref{def: kol} together with $n_\Rc$ and $n_\Pc$.
 
 
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -614,7 +617,7 @@ $$ \Prob \left( \bigcup_{n=1}^\infty \{ \sum_1^n \lambda (Z_i -\mu_i) - \psi_i(\
 \end{lemma}
 
 Both of these lemmas are available in earlier discussion for real-valued variables \cite{russo2013}.
-We now specialize our discussion to the $L^2$-space $\Yc$ where $<y,y> = \|y \|_2^2$.
+We now specialize our discussion to the vector space $\Yc \subseteq \Real^d$ where the inner product $<y,y> = \|y \|_2^2$.
 To simplify notation we will write $f^*_t := f^*(x_t)$ and $f_t = f(x_t)$ for arbitrary $f\in \Fc$.
 We now define
 \begin{eqnarray*}
