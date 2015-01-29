@@ -1,5 +1,5 @@
 # Fdb version 3
-["pdflatex"] 1417735264 "eluder_mdp_poster.tex" "eluder_mdp_poster.pdf" "eluder_mdp_poster" 1417735266
+["pdflatex"] 1417736913 "eluder_mdp_poster.tex" "eluder_mdp_poster.pdf" "eluder_mdp_poster" 1417736914
   "../media/basic_mdp.png" 1417562656 34100 e736ef79efb8a54d2ec1f6e1949e3aec ""
   "../media/covering.png" 1417630091 32015 459c5739e1c23cb55809499d5d7de525 ""
   "../media/eps_dependence.png" 1417591828 15326 0287f59d487a9c5c29d431784b6fa7d1 ""
@@ -154,9 +154,9 @@
   "/usr/local/texlive/2013/texmf-dist/tex/latex/xcolor/xcolor.sty" 1169481954 55224 a43bab84e0ac5e6efcaf9a98bde73a94 ""
   "/usr/local/texlive/2013/texmf-dist/tex/latex/xkeyval/xkeyval.sty" 1350473462 4934 09bb8eb3760faa4ffb6107a36e5b3d76 ""
   "baposter.cls" 1417550191 48744 be689fb62b90a56c8b0d0c008559b7ff ""
-  "eluder_mdp_poster.aux" 1417735266 537 c37b9851ab8eda1f65781561f6caf43c ""
-  "eluder_mdp_poster.tex" 1417735264 19016 f4fe65d658a67ab507be32ce48a9d46a ""
+  "eluder_mdp_poster.aux" 1417736914 537 c37b9851ab8eda1f65781561f6caf43c ""
+  "eluder_mdp_poster.tex" 1417736912 19016 f4fe65d658a67ab507be32ce48a9d46a ""
   (generated)
-  "eluder_mdp_poster.pdf"
   "eluder_mdp_poster.aux"
   "eluder_mdp_poster.log"
+  "eluder_mdp_poster.pdf"
